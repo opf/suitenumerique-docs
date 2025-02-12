@@ -147,6 +147,10 @@ and this project adheres to
 - 🐛(email) invitation emails in receivers language
 
 
+## Fixed
+
+- 🐛(backend) race condition create doc #633
+
 ## [2.2.0] - 2025-02-10
 
 ## Added
