@@ -1650,6 +1650,7 @@ class ConfigView(drf.views.APIView):
             "CRISP_WEBSITE_ID",
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",
+            "FRONTEND_HOMEPAGE_FEATURE_ENABLED",
             "FRONTEND_FOOTER_FEATURE_ENABLED",
             "FRONTEND_THEME",
             "MEDIA_BASE_URL",
