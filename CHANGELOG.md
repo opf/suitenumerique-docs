@@ -10,6 +10,7 @@ and this project adheres to
 
 ## Added
 
+- 🚸(backend) make document search on title accent-insensitive #874
 - 🚩 add homepage feature flag #861
 
 
