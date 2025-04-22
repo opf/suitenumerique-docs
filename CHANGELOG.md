@@ -13,6 +13,9 @@ and this project adheres to
 - 🚸(backend) make document search on title accent-insensitive #874
 - 🚩 add homepage feature flag #861
 
+## Changed
+
+⚡️(frontend) reduce unblocking time for config #867
 
 ## [3.1.0] - 2025-04-07
 
