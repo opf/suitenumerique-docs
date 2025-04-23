@@ -5,6 +5,7 @@ export interface Access {
   role: Role;
   team: string;
   user: User;
+  document_id: string;
   abilities: {
     destroy: boolean;
     partial_update: boolean;
@@ -73,7 +74,14 @@ export interface Doc {
     versions_destroy: boolean;
     versions_list: boolean;
     versions_retrieve: boolean;
+    link_select_options: LinkSelectOption;
   };
+}
+
+export interface LinkSelectOption {
+  public?: LinkRole[];
+  authenticated?: LinkRole[];
+  restricted?: LinkRole[];
 }
 
 export enum DocDefaultFilter {

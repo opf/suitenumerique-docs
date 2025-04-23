@@ -21,8 +21,13 @@ import { SearchUserRow } from './SearchUserRow';
 type Props = {
   doc: Doc;
   access: Access;
+  isInherited?: boolean;
 };
-export const DocShareMemberItem = ({ doc, access }: Props) => {
+export const DocShareMemberItem = ({
+  doc,
+  access,
+  isInherited = false,
+}: Props) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { isLastOwner, isOtherOwner } = useWhoAmI(access);
@@ -80,6 +85,8 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
     },
   ];
 
+  const canUpdate = isInherited ? false : doc.abilities.accesses_manage;
+
   return (
     <Box
       $width="100%"
@@ -94,12 +101,12 @@ export const DocShareMemberItem = ({ doc, access }: Props) => {
             <DocRoleDropdown
               currentRole={access.role}
               onSelectRole={onUpdate}
-              canUpdate={doc.abilities.accesses_manage}
+              canUpdate={canUpdate}
               isLastOwner={isLastOwner}
               isOtherOwner={!!isOtherOwner}
             />
 
-            {isDesktop && doc.abilities.accesses_manage && (
+            {isDesktop && canUpdate && (
               <DropdownMenu options={moreActions}>
                 <IconOptions
                   isHorizontal

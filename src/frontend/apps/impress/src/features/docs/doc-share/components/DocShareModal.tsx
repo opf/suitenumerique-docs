@@ -17,12 +17,13 @@ import { isValidEmail } from '@/utils';
 
 import {
   KEY_LIST_USER,
-  useDocAccessesInfinite,
+  useDocAccesses,
   useDocInvitationsInfinite,
   useUsers,
 } from '../api';
 import { Invitation } from '../types';
 
+import { DocInheritedShareContent } from './DocInheritedShareContent';
 import { DocShareAddMemberList } from './DocShareAddMemberList';
 import { DocShareInvitationItem } from './DocShareInvitationItem';
 import { DocShareMemberItem } from './DocShareMemberItem';
@@ -66,7 +67,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
     setInputValue('');
   };
 
-  const membersQuery = useDocAccessesInfinite({
+  const { data: membersQuery } = useDocAccesses({
     docId: doc.id,
   });
 
@@ -82,11 +83,32 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
     },
   );
 
-  const membersData: QuickSearchData<Access> = useMemo(() => {
-    const members =
-      membersQuery.data?.pages.flatMap((page) => page.results) || [];
+  const accessesFromTopLevel = useMemo(() => {
+    const accesses = membersQuery?.filter(
+      (access) => access.document_id !== doc.id,
+    );
+    // Group accesses by document_id
+    const accessesByDocumentId = new Map<string, Access[]>();
 
-    const count = membersQuery.data?.pages[0]?.count ?? 1;
+    if (accesses) {
+      for (const access of accesses) {
+        if (!accessesByDocumentId.has(access.document_id)) {
+          accessesByDocumentId.set(access.document_id, []);
+        }
+        accessesByDocumentId.get(access.document_id)?.push(access);
+      }
+    }
+
+    return accessesByDocumentId;
+  }, [membersQuery, doc.id]);
+
+  console.log('accessesFromTopLevel', accessesFromTopLevel);
+
+  const membersData: QuickSearchData<Access> = useMemo(() => {
+    const members: Access[] =
+      membersQuery?.filter((access) => access.document_id === doc.id) ?? [];
+
+    const count = membersQuery?.length ?? 1;
 
     return {
       groupName:
@@ -96,16 +118,8 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
               count: count,
             }),
       elements: members,
-      endActions: membersQuery.hasNextPage
-        ? [
-            {
-              content: <LoadMoreText data-testid="load-more-members" />,
-              onSelect: () => void membersQuery.fetchNextPage(),
-            },
-          ]
-        : undefined,
     };
-  }, [membersQuery, t]);
+  }, [membersQuery, doc.id, t]);
 
   const invitationsData: QuickSearchData<Invitation> = useMemo(() => {
     const invitations =
@@ -254,8 +268,17 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
                   loading={searchUsersQuery.isLoading}
                   placeholder={t('Type a name or email')}
                 >
+                  {accessesFromTopLevel && (
+                    <DocInheritedShareContent accesses={accessesFromTopLevel} />
+                  )}
                   {canViewAccesses && (
-                    <>
+                    <Box
+                      $padding={{
+                        horizontal: 'base',
+                        vertical: 'base',
+                        top: '0px',
+                      }}
+                    >
                       {!showMemberSection && inputValue !== '' && (
                         <QuickSearchGroup
                           group={searchUserData}
@@ -291,7 +314,7 @@ export const DocShareModal = ({ doc, onClose }: Props) => {
                           </Box>
                         </>
                       )}
-                    </>
+                    </Box>
                   )}
                 </QuickSearch>
               )}

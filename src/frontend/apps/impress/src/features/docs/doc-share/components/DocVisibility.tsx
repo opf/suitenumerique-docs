@@ -1,5 +1,5 @@
 import { VariantType, useToastProvider } from '@openfun/cunningham-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css } from 'styled-components';
 
@@ -62,7 +62,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
   };
 
   const linkReachOptions: DropdownMenuOption[] = Object.keys(
-    linkReachTranslations,
+    doc.abilities.link_select_options,
   ).map((key) => ({
     label: linkReachTranslations[key as LinkReach],
     icon: linkReachChoices[key as LinkReach].icon,
@@ -70,19 +70,26 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
     isSelected: linkReach === (key as LinkReach),
   }));
 
-  const linkMode: DropdownMenuOption[] = Object.keys(linkModeTranslations).map(
-    (key) => ({
-      label: linkModeTranslations[key as LinkRole],
-      callback: () => updateLinkRole(key as LinkRole),
-      isSelected: docLinkRole === (key as LinkRole),
-    }),
-  );
-
   const showLinkRoleOptions = doc.link_reach !== LinkReach.RESTRICTED;
   const description =
     docLinkRole === LinkRole.READER
       ? linkReachChoices[linkReach].descriptionReadOnly
       : linkReachChoices[linkReach].descriptionEdit;
+
+  const linkRoleOptions: DropdownMenuOption[] = useMemo(() => {
+    const options = doc.abilities.link_select_options[linkReach] ?? [];
+    return options.map((option) => ({
+      label: linkModeTranslations[option],
+      callback: () => updateLinkRole(option),
+      isSelected: docLinkRole === option,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    doc.abilities.link_select_options,
+    linkReach,
+    linkModeTranslations,
+    docLinkRole,
+  ]);
 
   return (
     <Box
@@ -145,7 +152,7 @@ export const DocVisibility = ({ doc }: DocVisibilityProps) => {
               <DropdownMenu
                 disabled={!canManage}
                 showArrow={true}
-                options={linkMode}
+                options={linkRoleOptions}
                 label={t('Visibility mode')}
               >
                 <Text $weight="initial" $variation="600">
