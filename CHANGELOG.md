@@ -15,7 +15,8 @@ and this project adheres to
 
 ## Changed
 
-⚡️(frontend) reduce unblocking time for config #867
+- ⚡️(frontend) reduce unblocking time for config #867
+- ♻️(frontend) bind UI with ability access #900
 
 ## [3.1.0] - 2025-04-07
 
