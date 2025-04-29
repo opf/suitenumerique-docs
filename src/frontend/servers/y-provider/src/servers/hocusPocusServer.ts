@@ -1,17 +1,17 @@
-import { Server } from '@hocuspocus/server';
+import { Hocuspocus } from '@hocuspocus/server';
 import { validate as uuidValidate, version as uuidVersion } from 'uuid';
 
 import { fetchDocument } from '@/api/getDoc';
 import { getMe } from '@/api/getMe';
 import { logger } from '@/utils';
 
-export const hocusPocusServer = Server.configure({
+export const hocusPocusServer = new Hocuspocus({
   name: 'docs-collaboration',
   timeout: 30000,
   quiet: true,
   async onConnect({
     requestHeaders,
-    connection,
+    connectionConfig,
     documentName,
     requestParameters,
     context,
@@ -59,7 +59,7 @@ export const hocusPocusServer = Server.configure({
       return Promise.reject(new Error('Backend error: Unauthorized'));
     }
 
-    connection.readOnly = !can_edit;
+    connectionConfig.readOnly = !can_edit;
 
     /*
      * Unauthenticated users can be allowed to connect
