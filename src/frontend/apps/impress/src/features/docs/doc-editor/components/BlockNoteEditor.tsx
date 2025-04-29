@@ -1,11 +1,10 @@
 import {
   BlockNoteSchema,
-  Dictionary,
   defaultBlockSpecs,
-  locales,
   withPageBreak,
 } from '@blocknote/core';
 import '@blocknote/core/fonts/inter.css';
+import * as locales from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
@@ -27,14 +26,13 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
-import { DividerBlock, QuoteBlock } from './custom-blocks';
+import { DividerBlock } from './custom-blocks';
 
 export const blockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
     blockSpecs: {
       ...defaultBlockSpecs,
       divider: DividerBlock,
-      quote: QuoteBlock,
     },
   }),
 );
@@ -112,7 +110,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         },
         showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
-      dictionary: locales[lang as keyof typeof locales] as Dictionary,
+      dictionary: locales[lang as keyof typeof locales],
       uploadFile,
       schema: blockNoteSchema,
     },
