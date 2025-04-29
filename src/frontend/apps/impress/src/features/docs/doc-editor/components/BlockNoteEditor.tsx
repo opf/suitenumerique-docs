@@ -1,3 +1,4 @@
+import { codeBlock } from '@blocknote/code-block';
 import {
   BlockNoteSchema,
   defaultBlockSpecs,
@@ -61,6 +62,7 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 
   const editor = useCreateBlockNote(
     {
+      codeBlock,
       collaboration: {
         provider,
         fragment: provider.document.getXmlFragment('document-store'),
