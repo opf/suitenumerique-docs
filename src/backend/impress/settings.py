@@ -318,6 +318,8 @@ class Base(Configuration):
         "django.contrib.staticfiles",
         # OIDC third party
         "mozilla_django_oidc",
+        # OP explore things
+        "opintegration",
     ]
 
     # Cache

@@ -1,0 +1,66 @@
+services:
+  postgresql:
+    networks:
+      - external
+  redis:
+    networks:
+      - external
+  mailcatcher:
+    networks:
+      - external
+  minio:
+    networks:
+      - external
+  createbuckets:
+    networks:
+      - external
+  app-dev:
+    extra_hosts:
+      - "openproject.local:host-gateway"
+    networks:
+      - external
+  celery-dev:
+    networks:
+      - external
+  app:
+    networks:
+      - external
+  celery:
+    networks:
+      - external
+  nginx:
+    networks:
+      - external
+
+  frontend:
+    ports:
+      - "3003:3000"
+    networks:
+      - external
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.docs.loadbalancer.server.port"
+      - "traefik.http.routers.docs.rule=Host(`docs.local`)"
+      - "traefik.http.routers.docs.entrypoints=websecure"
+
+  crowdin:
+    networks:
+      - external
+  node:
+    networks:
+      - external
+  y-provider:
+    networks:
+      - external
+  kc_postgresql:
+    networks:
+      - external
+  keycloak:
+    networks:
+      - external
+
+# Using TLS proxy network
+networks:
+  external:
+    name: gateway
+    external: true
