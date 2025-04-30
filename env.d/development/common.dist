@@ -18,7 +18,7 @@ PYTHONPATH=/app
 # Mail
 DJANGO_EMAIL_BRAND_NAME="La Suite Numérique"
 DJANGO_EMAIL_HOST="mailcatcher"
-DJANGO_EMAIL_LOGO_IMG="http://localhost:3000/assets/logo-suite-numerique.png"
+DJANGO_EMAIL_LOGO_IMG="http://localhost:3003/assets/logo-suite-numerique.png"
 DJANGO_EMAIL_PORT=1025
 
 # Backend url
@@ -42,11 +42,11 @@ OIDC_RP_CLIENT_SECRET=ThisIsAnExampleKeyForDevPurposeOnly
 OIDC_RP_SIGN_ALGO=RS256
 OIDC_RP_SCOPES="openid email"
 
-LOGIN_REDIRECT_URL=http://localhost:3000
-LOGIN_REDIRECT_URL_FAILURE=http://localhost:3000
-LOGOUT_REDIRECT_URL=http://localhost:3000
+LOGIN_REDIRECT_URL=http://localhost:3003
+LOGIN_REDIRECT_URL_FAILURE=http://localhost:3003
+LOGOUT_REDIRECT_URL=http://localhost:3003
 
-OIDC_REDIRECT_ALLOWED_HOSTS=["http://localhost:8083", "http://localhost:3000"]
+OIDC_REDIRECT_ALLOWED_HOSTS=["http://localhost:8083", "http://localhost:3003"]
 OIDC_AUTH_REQUEST_EXTRA_PARAMS={"acr_values": "eidas1"}
 
 # AI
@@ -58,7 +58,7 @@ AI_MODEL=llama
 # Collaboration
 COLLABORATION_API_URL=http://y-provider:4444/collaboration/api/
 COLLABORATION_BACKEND_BASE_URL=http://app-dev:8000
-COLLABORATION_SERVER_ORIGIN=http://localhost:3000
+COLLABORATION_SERVER_ORIGIN=http://localhost:3003
 COLLABORATION_SERVER_SECRET=my-secret
 COLLABORATION_WS_URL=ws://localhost:4444/collaboration/ws/
 
@@ -66,4 +66,4 @@ COLLABORATION_WS_URL=ws://localhost:4444/collaboration/ws/
 FRONTEND_THEME=default
 FRONTEND_HOMEPAGE_FEATURE_ENABLED=True
 FRONTEND_FOOTER_FEATURE_ENABLED=True
-FRONTEND_URL_JSON_FOOTER=http://frontend:3000/contents/footer-demo.json
+FRONTEND_URL_JSON_FOOTER=http://frontend:3003/contents/footer-demo.json
