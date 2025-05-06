@@ -17,6 +17,9 @@ services:
   app-dev:
     extra_hosts:
       - "openproject.local:host-gateway"
+    environment:
+      - OPEN_PROJECT_HOST=http://openproject.local
+      - OPEN_PROJECT_API_KEY=your_api_key
     networks:
       - external
   celery-dev:

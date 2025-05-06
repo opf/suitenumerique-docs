@@ -1,6 +1,7 @@
+import logging
 import os
 import requests
-from django.http import JsonResponse
+from django.http import HttpResponse
 from django.views.decorators.http import require_GET
 
 # Create your views here.
@@ -9,10 +10,33 @@ from django.views.decorators.http import require_GET
 def hello_json(request):
     return JsonResponse({"result": "OK"})
 
-def tunnel_api(request):
-    response = requests.get(
-        "http://openproject.local/api/v3/",
-        auth=("apikey", "2e1d4af382b425b2ee1f5c7901c64d7ff93f95df79c90171f7544011aecc8d47"), # local key, please don't use anything actually public
+def tunnel_api(request, path):
+    logger = logging.getLogger("django")
+
+    open_project_host = os.environ.get("OPEN_PROJECT_HOST")
+    api_key = os.environ.get("OPEN_PROJECT_API_KEY")
+
+    headers = {
+        k: v for k, v in request.headers.items()
+        if k.lower() not in {"host", "content-length"}
+    }
+    target_url = f"{open_project_host}/{path}"
+
+    logger.info("TUNNEL: request %s %s body %s" % (request.method, target_url, request.body))
+
+    response = requests.request(
+        method=request.method,
+        url=target_url,
+        headers=headers,
+        data=request.body,
+        auth=("apikey", api_key),
         verify=False, # no need to check SSL certificates :shrug:
     )
-    return JsonResponse(response.json())
+
+    logger.info("TUNNEL: response %s %s body %s" % (response.status_code, response.url, response.content))
+
+    return HttpResponse(
+        response.content,
+        status=response.status_code,
+        content_type=response.headers.get("Content-Type"),
+    )
