@@ -4,12 +4,6 @@ import requests
 from django.http import HttpResponse
 from django.views.decorators.http import require_GET
 
-# Create your views here.
-
-@require_GET
-def hello_json(request):
-    return JsonResponse({"result": "OK"})
-
 def tunnel_api(request, path):
     logger = logging.getLogger("django")
 

@@ -52,6 +52,7 @@ urlpatterns = [
                     r"^templates/(?P<resource_id>[0-9a-z-]*)/",
                     include(template_related_router.urls),
                 ),
+                path("op/", include("opintegration.urls")),
             ]
         ),
     ),

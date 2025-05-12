@@ -20,6 +20,12 @@ services:
     environment:
       - OPEN_PROJECT_HOST=http://openproject.local
       - OPEN_PROJECT_API_KEY=your_api_key
+      - DJANGO_EMAIL_LOGO_IMG=http://localhost:3001/assets/logo-suite-numerique.png
+      - LOGIN_REDIRECT_URL=http://localhost:3001
+      - LOGIN_REDIRECT_URL_FAILURE=http://localhost:3001
+      - LOGOUT_REDIRECT_URL=http://localhost:3001
+      - OIDC_REDIRECT_ALLOWED_HOSTS=http://localhost:8083,http://localhost:3001
+      - DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:3001
     networks:
       - external
   celery-dev:
@@ -37,7 +43,9 @@ services:
 
   frontend:
     ports:
-      - "3003:3000"
+      - "3000:3000"
+    environment:
+      - FRONTEND_URL_JSON_FOOTER=http://frontend:3001/contents/footer-demo.json
     networks:
       - external
     labels:
@@ -53,6 +61,8 @@ services:
     networks:
       - external
   y-provider:
+    environment:
+      - COLLABORATION_SERVER_ORIGIN=http://localhost:3001
     networks:
       - external
   kc_postgresql:
