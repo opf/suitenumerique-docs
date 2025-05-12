@@ -16,6 +16,7 @@ import { AIGroupButton } from './AIButton';
 import { FileDownloadButton } from './FileDownloadButton';
 import { MarkdownButton } from './MarkdownButton';
 import { ModalConfirmDownloadUnsafe } from './ModalConfirmDownloadUnsafe';
+import { OpenProjectButton } from './OpenProjectButton';
 
 export const BlockNoteToolbar = () => {
   const dict = useDictionary();
@@ -63,6 +64,8 @@ export const BlockNoteToolbar = () => {
 
         {/* Extra button to convert from markdown to json */}
         <MarkdownButton key="customButton" />
+
+        <OpenProjectButton key="openProjectButton" />
       </FormattingToolbar>
     );
   }, [toolbarItems, conf?.AI_FEATURE_ENABLED]);
