@@ -27,7 +27,11 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
-import { DividerBlock, QuoteBlock } from './custom-blocks';
+import {
+  DividerBlock,
+  OpenProjectWorkPackageBlock,
+  QuoteBlock,
+} from './custom-blocks';
 
 export const blockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
@@ -35,6 +39,7 @@ export const blockNoteSchema = withPageBreak(
       ...defaultBlockSpecs,
       divider: DividerBlock,
       quote: QuoteBlock,
+      openProjectWorkPackage: OpenProjectWorkPackageBlock,
     },
   }),
 );
