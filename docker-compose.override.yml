@@ -18,8 +18,8 @@ services:
     extra_hosts:
       - "openproject.local:host-gateway"
     environment:
-      - OPEN_PROJECT_HOST=http://openproject.local
-      - OPEN_PROJECT_API_KEY=your_api_key
+      - OPEN_PROJECT_HOST=https://openproject.local
+      - OPEN_PROJECT_API_KEY=7b39591772d7f128ca6a2fc32011212be220295731c5bc8d81b276e042a3e870
       - DJANGO_EMAIL_LOGO_IMG=http://localhost:3001/assets/logo-suite-numerique.png
       - LOGIN_REDIRECT_URL=http://localhost:3001
       - LOGIN_REDIRECT_URL_FAILURE=http://localhost:3001

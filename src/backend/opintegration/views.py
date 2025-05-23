@@ -15,6 +15,8 @@ def tunnel_api(request, path):
         if k.lower() not in {"host", "content-length"}
     }
     target_url = f"{open_project_host}/{path}"
+    if request.META.get('QUERY_STRING'):
+        target_url = f"{target_url}?{request.META['QUERY_STRING']}"
 
     logger.info("TUNNEL: request %s %s body %s" % (request.method, target_url, request.body))
 
