@@ -53,6 +53,30 @@ export const OpenProjectTaskBlockComponent: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
+  // On mount: if subject is empty but block has inline content, move it to subject and create the task
+  React.useEffect(() => {
+    if (!block.props.subject) {
+      // Try to extract plain text from block.content (array or string)
+      const initialText = Array.isArray(block.content)
+        ? block.content.map((c: any) => c.text || '').join('')
+        : (block.content as string) || '';
+
+      if (initialText.trim()) {
+        // Move text into props.subject and clear inline content after current render
+        queueMicrotask(() => {
+          editor.updateBlock(block, {
+            props: { ...block.props, subject: initialText.trim() },
+            content: [],
+          });
+          setSubject(initialText.trim());
+          // Create the task immediately
+          void saveTask(initialText.trim());
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Focus input after mount or when taskId changes (after creation)
   React.useEffect(() => {
     if (inputRef.current) {
