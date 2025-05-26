@@ -29,6 +29,7 @@ import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import {
   DividerBlock,
+  OpenProjectTaskBlock,
   OpenProjectWorkPackageBlock,
   QuoteBlock,
 } from './custom-blocks';
@@ -40,6 +41,7 @@ export const blockNoteSchema = withPageBreak(
       divider: DividerBlock,
       quote: QuoteBlock,
       openProjectWorkPackage: OpenProjectWorkPackageBlock,
+      openProjectTask: OpenProjectTaskBlock,
     },
   }),
 );

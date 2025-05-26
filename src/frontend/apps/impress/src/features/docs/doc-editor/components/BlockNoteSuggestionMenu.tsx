@@ -13,6 +13,7 @@ import { DocsBlockSchema } from '../types';
 
 import {
   getDividerReactSlashMenuItems,
+  getOpenProjectTaskBlockSlashMenuItems,
   getOpenProjectWorkPackageReactSlashMenuItems,
   getQuoteReactSlashMenuItems,
 } from './custom-blocks';
@@ -36,6 +37,7 @@ export const BlockNoteSuggestionMenu = () => {
               t,
               basicBlocksName,
             ),
+            getOpenProjectTaskBlockSlashMenuItems(editor, t, basicBlocksName),
           ),
           query,
         ),
