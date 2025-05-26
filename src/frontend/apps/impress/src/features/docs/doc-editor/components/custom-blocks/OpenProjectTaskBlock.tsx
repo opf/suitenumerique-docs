@@ -44,6 +44,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
               subject: data.subject,
               lockVersion: data.lockVersion,
               wpid: +data.id,
+              wpurl: data._links?.self?.href || null,
             },
           });
         })
@@ -102,6 +103,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
             wpid: +data.id,
             subject: data.subject,
             lockVersion: data.lockVersion,
+            wpurl: data._links?.self?.href || null,
           },
         });
       } else {
@@ -178,19 +180,26 @@ export const OpenProjectTaskBlockComponent: React.FC<{
   };
 
   // Render ID as link or "NEW"
+  const OPENPROJECT_HOST =
+    process.env.OPEN_PROJECT_HOST || 'https://openproject.local';
   const renderId = () => {
     if (!taskId) {
       return <span style={{ color: '#aaa' }}>NEW</span>;
     }
+    const url = `${OPENPROJECT_HOST}/wp/${taskId}`;
     return (
       <a
-        href={`/op/work_packages/${taskId}`}
-        target="_blank"
-        rel="noopener noreferrer"
+        href={url}
         style={{
           marginRight: 6,
           textDecoration: 'underline',
           color: '#1976d2',
+          cursor: 'pointer',
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          window.open(url, '_blank');
         }}
       >
         #{taskId}
