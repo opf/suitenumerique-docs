@@ -48,7 +48,9 @@ const OpenProjectWorkPackageBlockComponent = () => {
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
-  // const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
   // Fetch statuses when a type is selected
   React.useEffect(() => {
@@ -342,60 +344,87 @@ const OpenProjectWorkPackageBlockComponent = () => {
               <div>
                 <button
                   disabled={
+                    saving ||
                     !subject ||
                     !description ||
                     !selectedStatus ||
                     !selectedType ||
                     !selectedProject
                   }
-                  onClick={async () => {
+                  onClick={() => {
+                    setSaveError(null);
+                    setSaveSuccess(null);
+                    setSaving(true);
                     // Save work package
                     // Find selected type and status objects for hrefs
-                    const typeObj = types.find((t) => t.id === selectedType);
+                    const typeObj = types.find((t) => t.id == selectedType);
                     const statusObj = statuses.find(
-                      (s) => s.id === selectedStatus,
+                      (s) => s.id == selectedStatus,
                     );
+                    console.log('types:', types);
+                    console.log('statuses:', statuses);
+                    console.log('selectedType:', selectedType);
+                    console.log('selectedStatus:', selectedStatus);
+                    console.log('typeObj:', typeObj);
+                    console.log('statusObj:', statusObj);
                     if (!typeObj || !statusObj) {
+                      setSaveError(t('Type or status not found.'));
+                      setSaving(false);
                       return;
                     }
-                    // POST to /api/v3/projects/{project_id}/work_packages
-                    try {
-                      // const [saving, setSaving] = useState(false); // For loading state if needed
-                      // setSaving(true);
-                      const response = await fetchAPI(
-                        `op/api/v3/projects/${selectedProject}/work_packages`,
-                        {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            subject,
-                            description: { format: 'plain', raw: description },
-                            _links: {
-                              type: { href: typeObj._links.self.href },
-                              status: { href: statusObj._links.self.href },
-                            },
-                          }),
-                        },
-                      );
-                      if (!response.ok) {
-                        throw new Error(
-                          `HTTP error! status: ${response.status}`,
+                    fetchAPI(
+                      `op/api/v3/projects/${selectedProject}/work_packages`,
+                      {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          subject,
+                          description: { format: 'plain', raw: description },
+                          _links: {
+                            type: { href: typeObj._links.self.href },
+                            status: { href: statusObj._links.self.href },
+                          },
+                        }),
+                      },
+                    )
+                      .then(async (response) => {
+                        if (!response.ok) {
+                          const errorText = await response.text();
+                          throw new Error(
+                            `HTTP error! status: ${response.status} - ${errorText}`,
+                          );
+                        }
+                        setSaveSuccess(t('Work package created successfully!'));
+                        setSubject('');
+                        setDescription('');
+                        setSelectedStatus(null);
+                        setSelectedType(null);
+                        // Optionally, reset project selection as well
+                      })
+                      .catch((error) => {
+                        // eslint-disable-next-line no-console
+                        console.error('Error creating work package:', error);
+                        setSaveError(
+                          t('Failed to create work package:') +
+                            ' ' +
+                            (error?.message || error),
                         );
-                      }
-                      // Optionally, show success or reset form
-                      alert(t('Work package created successfully!'));
-                      // Optionally, reset form or show created work package
-                    } catch (error) {
-                      // eslint-disable-next-line no-console
-                      console.error('Error creating work package:', error);
-                      alert(t('Failed to create work package.'));
-                    } finally {
-                      // setSaving(false);
-                    }
+                      })
+                      .finally(() => {
+                        setSaving(false);
+                      });
                   }}
                 >
-                  {t('Save')}
+                  {saving ? t('Saving...') : t('Save')}
                 </button>
+                {saveError && (
+                  <div style={{ color: 'red', marginTop: 8 }}>{saveError}</div>
+                )}
+                {saveSuccess && (
+                  <div style={{ color: 'green', marginTop: 8 }}>
+                    {saveSuccess}
+                  </div>
+                )}
               </div>
             </div>
           )}
