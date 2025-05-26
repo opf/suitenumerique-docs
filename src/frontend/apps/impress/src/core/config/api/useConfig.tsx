@@ -2,11 +2,17 @@ import { useQuery } from '@tanstack/react-query';
 
 import { APIError, errorCauses, fetchAPI } from '@/api';
 import { Theme } from '@/cunningham/';
+import { FooterType } from '@/features/footer';
 import { PostHogConf } from '@/services';
+
+interface ThemeCustomization {
+  footer?: FooterType;
+}
 
 interface ConfigResponse {
   AI_FEATURE_ENABLED?: boolean;
   COLLABORATION_WS_URL?: string;
+  COLLABORATION_WS_NOT_CONNECTED_READY_ONLY?: boolean;
   CRISP_WEBSITE_ID?: string;
   ENVIRONMENT: string;
   FRONTEND_CSS_URL?: string;
@@ -17,6 +23,7 @@ interface ConfigResponse {
   MEDIA_BASE_URL?: string;
   POSTHOG_KEY?: PostHogConf;
   SENTRY_DSN?: string;
+  theme_customization?: ThemeCustomization;
 }
 
 const LOCAL_STORAGE_KEY = 'docs_config';
@@ -53,13 +60,11 @@ export function useConfig() {
   const cachedData = getCachedTranslation();
   const oneHour = 1000 * 60 * 60;
 
-  const response = useQuery<ConfigResponse, APIError, ConfigResponse>({
+  return useQuery<ConfigResponse, APIError, ConfigResponse>({
     queryKey: [KEY_CONFIG],
     queryFn: () => getConfig(),
     initialData: cachedData,
     staleTime: oneHour,
     initialDataUpdatedAt: Date.now() - oneHour, // Force initial data to be considered stale
   });
-
-  return response;
 }

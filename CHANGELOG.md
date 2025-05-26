@@ -8,26 +8,72 @@ and this project adheres to
 
 ## [Unreleased]
 
-## Fixed 
+## [3.3.0] - 2025-05-06
 
-- 🔒(frontend) enhance file download security #889
+### Added
+
+- ✨(backend) add endpoint checking media status #984
+- ✨(backend) allow setting session cookie age via env var #977
+- ✨(backend) allow theme customnization using a configuration file #948
+- ✨(frontend) Add a custom callout block to the editor #892
+- 🚩(frontend) version MIT only #911
+- ✨(backend) integrate maleware_detection from django-lasuite #936
+- 🏗️(frontend) Footer configurable #959
+- 🩺(CI) add lint spell mistakes #954
+- ✨(frontend) create generic theme #792
+- 🛂(frontend) block edition to not connected users #945
+- 🚸(frontend) Let loader during upload analyze #984
+- 🚩(frontend) feature flag on blocking edition #997
+
+### Changed
+
+- 📝(frontend) Update documentation #949
+- ✅(frontend) Improve tests coverage #949
+- ⬆️(docker) upgrade backend image to python 3.13 #973
+- ⬆️(docker) upgrade node images to alpine 3.21 #973
+
+### Fixed
+- 🐛(y-provider) increase JSON size limits for transcription conversion #989
+
+### Removed
+
+- 🔥(back) remove footer endpoint #948
+
+
+## [3.2.1] - 2025-05-06
+
+## Fixed
+
+- 🐛(frontend) fix list copy paste #943
+- 📝(doc) update contributing policy (commit signatures are now mandatory) #895
+
+
+## [3.2.0] - 2025-05-05
 
 ## Added
 
 - 🚸(backend) make document search on title accent-insensitive #874
 - 🚩 add homepage feature flag #861
+- 📝(doc) update contributing policy (commit signatures are now mandatory) #895
 - ✨(settings) Allow configuring PKCE for the SSO #886
 - 🌐(i18n) activate chinese and spanish languages #884
 - 🔧(backend) allow overwriting the data directory #893
 - ➕(backend) add  `django-lasuite` dependency #839
+- ✨(frontend) advanced table features #908
 
 ## Changed
 
-⚡️(frontend) reduce unblocking time for config #867
+- ⚡️(frontend) reduce unblocking time for config #867
+- ♻️(frontend) bind UI with ability access #900
+- ♻️(frontend) use built-in Quote block #908
 
 ## Fixed
 
 - 🐛(nginx) fix 404 when accessing a doc #866
+- 🔒️(drf) disable browsable HTML API renderer #919
+- 🔒(frontend) enhance file download security #889
+- 🐛(backend) race condition create doc #633
+- 🐛(frontend) fix breaklines in custom blocks #908
 
 ## [3.1.0] - 2025-04-07
 
@@ -155,11 +201,6 @@ and this project adheres to
 - 🐛(backend) allow any type of extensions for media download #671
 - ♻️(frontend) improve table pdf rendering
 - 🐛(email) invitation emails in receivers language
-
-
-## Fixed
-
-- 🐛(backend) race condition create doc #633
 
 ## [2.2.0] - 2025-02-10
 
@@ -531,7 +572,7 @@ and this project adheres to
 - ⚡️(e2e) unique login between tests (#80)
 - ⚡️(CI) improve e2e job (#86)
 - ♻️(frontend) improve the error and message info ui (#93)
-- ✏️(frontend) change all occurences of pad to doc (#99)
+- ✏️(frontend) change all occurrences of pad to doc (#99)
 
 ## Fixed
 
@@ -549,7 +590,10 @@ and this project adheres to
 - ✨(frontend) Coming Soon page (#67)
 - 🚀 Impress, project to manage your documents easily and collaboratively.
 
-[unreleased]: https://github.com/numerique-gouv/impress/compare/v3.1.0...main
+[unreleased]: https://github.com/numerique-gouv/impress/compare/v3.3.0...main
+[v3.3.0]: https://github.com/numerique-gouv/impress/releases/v3.3.0
+[v3.2.1]: https://github.com/numerique-gouv/impress/releases/v3.2.1
+[v3.2.0]: https://github.com/numerique-gouv/impress/releases/v3.2.0
 [v3.1.0]: https://github.com/numerique-gouv/impress/releases/v3.1.0
 [v3.0.0]: https://github.com/numerique-gouv/impress/releases/v3.0.0
 [v2.6.0]: https://github.com/numerique-gouv/impress/releases/v2.6.0

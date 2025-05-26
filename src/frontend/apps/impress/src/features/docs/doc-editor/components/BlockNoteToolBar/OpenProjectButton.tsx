@@ -1,10 +1,9 @@
-import { fetchAPI } from '@/api';
-import {
-  useComponentsContext,
-} from '@blocknote/react';
+import { useComponentsContext } from '@blocknote/react';
 import { VariantType, useToastProvider } from '@openfun/cunningham-react';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { fetchAPI } from '@/api';
 
 export const OpenProjectButton = () => {
   const Components = useComponentsContext();
@@ -18,10 +17,16 @@ export const OpenProjectButton = () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const data = await response.json();
-      toast(t('OpenProject API response: ') + JSON.stringify(data), VariantType.SUCCESS);
+      toast(
+        t('OpenProject API response: ') + JSON.stringify(data),
+        VariantType.SUCCESS,
+      );
     } catch (error) {
       console.error('Error calling OpenProject API:', error);
       toast(t('Error calling OpenProject API'), VariantType.ERROR);
@@ -35,7 +40,7 @@ export const OpenProjectButton = () => {
   return (
     <Components.FormattingToolbar.Button
       className="bn-button --docs--editor-openproject-button"
-      mainTooltip={"Call OpenProject API"}
+      mainTooltip="Call OpenProject API"
       onClick={() => void handleOpenProjectAction()}
     >
       OP

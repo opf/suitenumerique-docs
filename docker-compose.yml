@@ -155,8 +155,7 @@ services:
       target: frontend-production
       args:
         API_ORIGIN: "http://localhost:8071"
-        Y_PROVIDER_URL: "ws://localhost:4444"
-        MEDIA_URL: "http://localhost:8083"
+        PUBLISH_AS_MIT: "false"
         SW_DEACTIVATED: "true"
     image: impress:frontend-development
     ports:
@@ -185,15 +184,11 @@ services:
       context: .
       dockerfile: ./src/frontend/servers/y-provider/Dockerfile
       target: y-provider
-    command: ["yarn", "workspace", "server-y-provider", "run", "dev"]
-    working_dir: /app/frontend
     restart: unless-stopped
     env_file:
       - env.d/development/common
     ports:
       - "4444:4444"
-    volumes:
-      - ./src/frontend/:/app/frontend
 
   kc_postgresql:
     image: postgres:14.3

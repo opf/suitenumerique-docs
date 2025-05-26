@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core/config/api';
 
-import { getQuoteFormattingToolbarItems } from '../custom-blocks';
+import { getCalloutFormattingToolbarItems } from '../custom-blocks';
 
 import { AIGroupButton } from './AIButton';
 import { FileDownloadButton } from './FileDownloadButton';
@@ -28,7 +28,7 @@ export const BlockNoteToolbar = () => {
   const toolbarItems = useMemo(() => {
     const toolbarItems = getFormattingToolbarItems([
       ...blockTypeSelectItems(dict),
-      getQuoteFormattingToolbarItems(t),
+      getCalloutFormattingToolbarItems(t),
     ]);
     const fileDownloadButtonIndex = toolbarItems.findIndex(
       (item) =>

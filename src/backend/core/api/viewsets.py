@@ -1,14 +1,16 @@
 """API endpoints"""
 # pylint: disable=too-many-lines
 
+import json
 import logging
 import uuid
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urlencode, urlparse
 
 from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.postgres.search import TrigramSimilarity
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.db import connection, transaction
@@ -16,14 +18,14 @@ from django.db import models as db
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Left, Length
 from django.http import Http404, StreamingHttpResponse
-from django.utils.decorators import method_decorator
-from django.utils.text import capfirst
+from django.urls import reverse
+from django.utils.text import capfirst, slugify
 from django.utils.translation import gettext_lazy as _
-from django.views.decorators.cache import cache_page
 
 import requests
 import rest_framework as drf
 from botocore.exceptions import ClientError
+from lasuite.malware_detection import malware_detection
 from rest_framework import filters, status, viewsets
 from rest_framework import response as drf_response
 from rest_framework.permissions import AllowAny
@@ -32,7 +34,6 @@ from rest_framework.throttling import UserRateThrottle
 from core import authentication, enums, models
 from core.services.ai_services import AIService
 from core.services.collaboration_services import CollaborationService
-from core.services.config_services import get_footer_json
 from core.utils import extract_attachments, filter_descendants
 
 from . import permissions, serializers, utils
@@ -576,7 +577,7 @@ class DocumentViewSet(
             queryset, filter_data["is_favorite"]
         )
 
-        # Apply ordering only now that everyting is filtered and annotated
+        # Apply ordering only now that everything is filtered and annotated
         queryset = filters.OrderingFilter().filter_queryset(
             self.request, queryset, self
         )
@@ -889,7 +890,7 @@ class DocumentViewSet(
             )
 
             # Compute cache for ancestors links to avoid many queries while computing
-            # abilties for his documents in the tree!
+            # abilities for his documents in the tree!
             ancestors_links.append(
                 {"link_reach": ancestor.link_reach, "link_role": ancestor.link_role}
             )
@@ -1156,7 +1157,10 @@ class DocumentViewSet(
 
         # Prepare metadata for storage
         extra_args = {
-            "Metadata": {"owner": str(request.user.id)},
+            "Metadata": {
+                "owner": str(request.user.id),
+                "status": enums.DocumentAttachmentStatus.PROCESSING,
+            },
             "ContentType": serializer.validated_data["content_type"],
         }
         file_unsafe = ""
@@ -1188,8 +1192,18 @@ class DocumentViewSet(
         document.attachments.append(key)
         document.save()
 
+        malware_detection.analyse_file(key, document_id=document.id)
+
+        url = reverse(
+            "documents-media-check",
+            kwargs={"pk": document.id},
+        )
+        parameters = urlencode({"key": key})
+
         return drf.response.Response(
-            {"file": f"{settings.MEDIA_URL:s}{key:s}"},
+            {
+                "file": f"{url:s}?{parameters:s}",
+            },
             status=drf.status.HTTP_201_CREATED,
         )
 
@@ -1271,10 +1285,70 @@ class DocumentViewSet(
             logger.debug("User '%s' lacks permission for attachment", user)
             raise drf.exceptions.PermissionDenied()
 
+        # Check if the attachment is ready
+        s3_client = default_storage.connection.meta.client
+        bucket_name = default_storage.bucket_name
+        try:
+            head_resp = s3_client.head_object(Bucket=bucket_name, Key=key)
+        except ClientError as err:
+            raise drf.exceptions.PermissionDenied() from err
+        metadata = head_resp.get("Metadata", {})
+        # In order to be compatible with existing upload without `status` metadata,
+        # we consider them as ready.
+        if (
+            metadata.get("status", enums.DocumentAttachmentStatus.READY)
+            != enums.DocumentAttachmentStatus.READY
+        ):
+            raise drf.exceptions.PermissionDenied()
+
         # Generate S3 authorization headers using the extracted URL parameters
         request = utils.generate_s3_authorization_headers(key)
 
         return drf.response.Response("authorized", headers=request.headers, status=200)
+
+    @drf.decorators.action(detail=True, methods=["get"], url_path="media-check")
+    def media_check(self, request, *args, **kwargs):
+        """
+        Check if the media is ready to be served.
+        """
+        document = self.get_object()
+
+        key = request.query_params.get("key")
+        if not key:
+            return drf.response.Response(
+                {"detail": "Missing 'key' query parameter"},
+                status=drf.status.HTTP_400_BAD_REQUEST,
+            )
+
+        if key not in document.attachments:
+            return drf.response.Response(
+                {"detail": "Attachment missing"},
+                status=drf.status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check if the attachment is ready
+        s3_client = default_storage.connection.meta.client
+        bucket_name = default_storage.bucket_name
+        try:
+            head_resp = s3_client.head_object(Bucket=bucket_name, Key=key)
+        except ClientError as err:
+            logger.error("Client Error fetching file %s metadata: %s", key, err)
+            return drf.response.Response(
+                {"detail": "Media not found"},
+                status=drf.status.HTTP_404_NOT_FOUND,
+            )
+        metadata = head_resp.get("Metadata", {})
+
+        body = {
+            "status": metadata.get("status", enums.DocumentAttachmentStatus.PROCESSING),
+        }
+        if metadata.get("status") == enums.DocumentAttachmentStatus.READY:
+            body = {
+                "status": enums.DocumentAttachmentStatus.READY,
+                "file": f"{settings.MEDIA_URL:s}{key:s}",
+            }
+
+        return drf.response.Response(body, status=drf.status.HTTP_200_OK)
 
     @drf.decorators.action(
         detail=True,
@@ -1711,11 +1785,11 @@ class ConfigView(drf.views.APIView):
         array_settings = [
             "AI_FEATURE_ENABLED",
             "COLLABORATION_WS_URL",
+            "COLLABORATION_WS_NOT_CONNECTED_READY_ONLY",
             "CRISP_WEBSITE_ID",
             "ENVIRONMENT",
             "FRONTEND_CSS_URL",
             "FRONTEND_HOMEPAGE_FEATURE_ENABLED",
-            "FRONTEND_FOOTER_FEATURE_ENABLED",
             "FRONTEND_THEME",
             "MEDIA_BASE_URL",
             "POSTHOG_KEY",
@@ -1728,23 +1802,41 @@ class ConfigView(drf.views.APIView):
             if hasattr(settings, setting):
                 dict_settings[setting] = getattr(settings, setting)
 
+        dict_settings["theme_customization"] = self._load_theme_customization()
+
         return drf.response.Response(dict_settings)
 
+    def _load_theme_customization(self):
+        if not settings.THEME_CUSTOMIZATION_FILE_PATH:
+            return {}
 
-class FooterView(drf.views.APIView):
-    """API ViewSet for sharing the footer JSON."""
-
-    permission_classes = [AllowAny]
-
-    @method_decorator(cache_page(settings.FRONTEND_FOOTER_VIEW_CACHE_TIMEOUT))
-    def get(self, request):
-        """
-        GET /api/v1.0/footer/
-            Return the footer JSON.
-        """
-        json_footer = (
-            get_footer_json(settings.FRONTEND_URL_JSON_FOOTER)
-            if settings.FRONTEND_URL_JSON_FOOTER
-            else {}
+        cache_key = (
+            f"theme_customization_{slugify(settings.THEME_CUSTOMIZATION_FILE_PATH)}"
         )
-        return drf.response.Response(json_footer)
+        theme_customization = cache.get(cache_key, {})
+        if theme_customization:
+            return theme_customization
+
+        try:
+            with open(
+                settings.THEME_CUSTOMIZATION_FILE_PATH, "r", encoding="utf-8"
+            ) as f:
+                theme_customization = json.load(f)
+        except FileNotFoundError:
+            logger.error(
+                "Configuration file not found: %s",
+                settings.THEME_CUSTOMIZATION_FILE_PATH,
+            )
+        except json.JSONDecodeError:
+            logger.error(
+                "Configuration file is not a valid JSON: %s",
+                settings.THEME_CUSTOMIZATION_FILE_PATH,
+            )
+        else:
+            cache.set(
+                cache_key,
+                theme_customization,
+                settings.THEME_CUSTOMIZATION_CACHE_TIMEOUT,
+            )
+
+        return theme_customization

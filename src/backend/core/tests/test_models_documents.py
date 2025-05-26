@@ -165,6 +165,7 @@ def test_models_documents_get_abilities_forbidden(
         "favorite": False,
         "invite_owner": False,
         "media_auth": False,
+        "media_check": False,
         "move": False,
         "link_configuration": False,
         "link_select_options": {
@@ -231,6 +232,7 @@ def test_models_documents_get_abilities_reader(
             "restricted": ["reader", "editor"],
         },
         "media_auth": True,
+        "media_check": True,
         "move": False,
         "partial_update": False,
         "restore": False,
@@ -293,6 +295,7 @@ def test_models_documents_get_abilities_editor(
             "restricted": ["reader", "editor"],
         },
         "media_auth": True,
+        "media_check": True,
         "move": False,
         "partial_update": True,
         "restore": False,
@@ -344,6 +347,7 @@ def test_models_documents_get_abilities_owner(django_assert_num_queries):
             "restricted": ["reader", "editor"],
         },
         "media_auth": True,
+        "media_check": True,
         "move": True,
         "partial_update": True,
         "restore": True,
@@ -392,6 +396,7 @@ def test_models_documents_get_abilities_administrator(django_assert_num_queries)
             "restricted": ["reader", "editor"],
         },
         "media_auth": True,
+        "media_check": True,
         "move": True,
         "partial_update": True,
         "restore": False,
@@ -443,6 +448,7 @@ def test_models_documents_get_abilities_editor_user(django_assert_num_queries):
             "restricted": ["reader", "editor"],
         },
         "media_auth": True,
+        "media_check": True,
         "move": False,
         "partial_update": True,
         "restore": False,
@@ -501,6 +507,7 @@ def test_models_documents_get_abilities_reader_user(
             "restricted": ["reader", "editor"],
         },
         "media_auth": True,
+        "media_check": True,
         "move": False,
         "partial_update": access_from_link,
         "restore": False,
@@ -557,6 +564,7 @@ def test_models_documents_get_abilities_preset_role(django_assert_num_queries):
             "restricted": ["reader", "editor"],
         },
         "media_auth": True,
+        "media_check": True,
         "move": False,
         "partial_update": False,
         "restore": False,
@@ -791,7 +799,7 @@ def test_models_documents__email_invitation__success_fr():
 
     assert (
         f"Test Sender2 (sender2@example.com) vous a invité avec le rôle &quot;propriétaire&quot; "
-        f"sur le document suivant: {document.title}" in email_content
+        f"sur le document suivant : {document.title}" in email_content
     )
     assert f"docs/{document.id}/" in email_content
 

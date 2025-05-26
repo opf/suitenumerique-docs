@@ -11,19 +11,23 @@
     },
     {
       "groupName": "allowed django versions",
-      "matchManagers": [
-        "pep621"
-      ],
-      "matchPackageNames": [
-        "Django"
-      ],
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["Django"],
       "allowedVersions": "<5.2"
+    },
+    {
+      "groupName": "allowed redis versions",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["redis"],
+      "allowedVersions": "<6.0.0"
     },
     {
       "enabled": false,
       "groupName": "ignored js dependencies",
       "matchManagers": ["npm"],
       "matchPackageNames": [
+        "@hocuspocus/provider",
+        "@hocuspocus/server",
         "eslint",
         "fetch-mock",
         "node",

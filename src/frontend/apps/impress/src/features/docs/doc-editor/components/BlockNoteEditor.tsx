@@ -1,11 +1,11 @@
+import { codeBlock } from '@blocknote/code-block';
 import {
   BlockNoteSchema,
-  Dictionary,
   defaultBlockSpecs,
-  locales,
   withPageBreak,
 } from '@blocknote/core';
 import '@blocknote/core/fonts/inter.css';
+import * as locales from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
@@ -15,30 +15,30 @@ import { useTranslation } from 'react-i18next';
 import * as Y from 'yjs';
 
 import { Box, TextErrors } from '@/components';
-import { Doc } from '@/docs/doc-management';
+import { Doc, useIsCollaborativeEditable } from '@/docs/doc-management';
 import { useAuth } from '@/features/auth';
 
-import { useUploadFile } from '../hook';
-import { useHeadings } from '../hook/useHeadings';
+import { useHeadings, useUploadFile, useUploadStatus } from '../hook/';
 import useSaveDoc from '../hook/useSaveDoc';
 import { useEditorStore } from '../stores';
 import { cssEditor } from '../styles';
+import { DocsBlockNoteEditor } from '../types';
 import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import {
+  CalloutBlock,
   DividerBlock,
   OpenProjectWorkPackageBlock,
-  QuoteBlock,
 } from './custom-blocks';
 
 export const blockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
     blockSpecs: {
       ...defaultBlockSpecs,
+      callout: CalloutBlock,
       divider: DividerBlock,
-      quote: QuoteBlock,
       openProjectWorkPackage: OpenProjectWorkPackageBlock,
     },
   }),
@@ -54,7 +54,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
   const { setEditor } = useEditorStore();
   const { t } = useTranslation();
 
-  const readOnly = !doc.abilities.partial_update;
+  const { isEditable, isLoading } = useIsCollaborativeEditable(doc);
+  const readOnly = !doc.abilities.partial_update || !isEditable || isLoading;
+
   useSaveDoc(doc.id, provider.document, !readOnly);
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage;
@@ -66,8 +68,9 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
     : user?.full_name || user?.email || t('Anonymous');
   const showCursorLabels: 'always' | 'activity' | (string & {}) = 'activity';
 
-  const editor = useCreateBlockNote(
+  const editor: DocsBlockNoteEditor = useCreateBlockNote(
     {
+      codeBlock,
       collaboration: {
         provider,
         fragment: provider.document.getXmlFragment('document-store'),
@@ -117,13 +120,21 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         },
         showCursorLabels: showCursorLabels as 'always' | 'activity',
       },
-      dictionary: locales[lang as keyof typeof locales] as Dictionary,
+      dictionary: locales[lang as keyof typeof locales],
+      tables: {
+        splitCells: true,
+        cellBackgroundColor: true,
+        cellTextColor: true,
+        headers: true,
+      },
       uploadFile,
       schema: blockNoteSchema,
     },
     [collabName, lang, provider, uploadFile],
   );
+
   useHeadings(editor);
+  useUploadStatus(editor);
 
   useEffect(() => {
     setEditor(editor);
