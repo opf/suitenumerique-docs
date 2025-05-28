@@ -1,0 +1,79 @@
+services:
+  postgresql:
+    networks:
+      - external
+  redis:
+    networks:
+      - external
+  mailcatcher:
+    networks:
+      - external
+  minio:
+    networks:
+      - external
+  createbuckets:
+    networks:
+      - external
+  app-dev:
+    extra_hosts:
+      - "openproject.local:host-gateway"
+    environment:
+      - OPEN_PROJECT_HOST=https://openproject.local
+      - OPEN_PROJECT_API_KEY=7b39591772d7f128ca6a2fc32011212be220295731c5bc8d81b276e042a3e870
+      - DJANGO_EMAIL_LOGO_IMG=http://localhost:3001/assets/logo-suite-numerique.png
+      - LOGIN_REDIRECT_URL=http://localhost:3001
+      - LOGIN_REDIRECT_URL_FAILURE=http://localhost:3001
+      - LOGOUT_REDIRECT_URL=http://localhost:3001
+      - OIDC_REDIRECT_ALLOWED_HOSTS=http://localhost:8083,http://localhost:3001
+      - DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:3001
+    networks:
+      - external
+  celery-dev:
+    networks:
+      - external
+  app:
+    networks:
+      - external
+  celery:
+    networks:
+      - external
+  nginx:
+    networks:
+      - external
+
+  frontend:
+    ports:
+      - "3000:3000"
+    environment:
+      - FRONTEND_URL_JSON_FOOTER=http://frontend:3001/contents/footer-demo.json
+    networks:
+      - external
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.docs.loadbalancer.server.port"
+      - "traefik.http.routers.docs.rule=Host(`docs.local`)"
+      - "traefik.http.routers.docs.entrypoints=websecure"
+
+  crowdin:
+    networks:
+      - external
+  node:
+    networks:
+      - external
+  y-provider:
+    environment:
+      - COLLABORATION_SERVER_ORIGIN=http://localhost:3001
+    networks:
+      - external
+  kc_postgresql:
+    networks:
+      - external
+  keycloak:
+    networks:
+      - external
+
+# Using TLS proxy network
+networks:
+  external:
+    name: gateway
+    external: true

@@ -9,3 +9,5 @@ export * from './paragraphPDF';
 export * from './quoteDocx';
 export * from './quotePDF';
 export * from './tablePDF';
+export * from './openProjectWorkPackageDocx';
+export * from './openProjectWorkPackagePDF';
