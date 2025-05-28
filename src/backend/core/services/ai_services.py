@@ -50,6 +50,11 @@ AI_TRANSLATE = (
     "Do not provide any other information."
 )
 
+AI_OPEN_PROJECT_FEATURE = (
+    "Transform the content in the html to a feature."
+    "Use following OpenProjet template:"
+)
+
 
 class AIService:
     """Service class for AI-related operations."""
@@ -90,4 +95,9 @@ class AIService:
         """Translate text to a specified language."""
         language_display = enums.ALL_LANGUAGES.get(language, language)
         system_content = AI_TRANSLATE.format(language=language_display)
+        return self.call_ai_api(system_content, text)
+    
+    def transform_to_open_project_feature(self, text, template):
+        """Transform text based on specified action."""
+        system_content = AI_OPEN_PROJECT_FEATURE + template
         return self.call_ai_api(system_content, text)

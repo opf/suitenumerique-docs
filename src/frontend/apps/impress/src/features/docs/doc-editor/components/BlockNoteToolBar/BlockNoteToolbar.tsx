@@ -19,6 +19,7 @@ import { AIGroupButton } from './AIButton';
 import { FileDownloadButton } from './FileDownloadButton';
 import { MarkdownButton } from './MarkdownButton';
 import { ModalConfirmDownloadUnsafe } from './ModalConfirmDownloadUnsafe';
+import { OPAIButton } from './OPAIButton';
 import { OpenProjectButton } from './OpenProjectButton';
 
 export const BlockNoteToolbar = () => {
@@ -69,6 +70,7 @@ export const BlockNoteToolbar = () => {
         {/* Extra button to convert from markdown to json */}
         <MarkdownButton key="customButton" />
 
+        <OPAIButton key="opAIButton" />
         <OpenProjectButton key="openProjectButton" />
       </FormattingToolbar>
     );
