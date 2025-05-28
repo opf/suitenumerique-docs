@@ -1,0 +1,83 @@
+name: op-docs
+
+services:
+  postgresql:
+    networks:
+      - internal
+    ports: !override
+      - "5435:5432"
+
+  redis:
+    networks:
+      - internal
+
+  mailcatcher:
+    ports: !reset []
+
+  minio:
+    networks:
+      - internal
+    ports: !reset []
+
+  createbuckets:
+    networks:
+      - internal
+
+  app-dev:
+    networks:
+      - internal
+      - external
+    environment:
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+      - DJANGO_CSRF_TRUSTED_ORIGINS=https://docs.local
+      - DJANGO_PATH_PREFIX=/backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.docs-backend.rule=Host(`docs.local`) && PathPrefix(`/backend`)"
+      - "traefik.http.routers.docs-backend.entrypoints=websecure"
+      - "traefik.http.services.docs-backend.loadbalancer.server.port=8000"
+      - "traefik.http.routers.docs-backend.middlewares=backend-strip"
+      - "traefik.http.middlewares.backend-strip.stripprefix.prefixes=/backend"
+    volumes:
+      - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
+    ports: !reset []
+
+  celery-dev:
+    networks:
+      - internal
+
+  nginx:
+    networks:
+      - internal
+    ports: !reset []
+    depends_on: !override
+      app-dev:
+        condition: service_started
+      y-provider:
+        condition: service_started
+
+  frontend:
+    networks:
+      - internal
+      - external
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.docs.rule=Host(`docs.local`)"
+      - "traefik.http.routers.docs.entrypoints=websecure"
+    build:
+      args:
+        API_ORIGIN: "https://docs.local/backend"
+        MEDIA_URL: "http://nginx:8083"
+        Y_PROVIDER_URL: "ws://y-provider:4444"
+    ports: !reset []
+
+  y-provider:
+    networks:
+      - internal
+    ports: !reset []
+
+networks:
+  internal:
+  external:
+    name: gateway
+    external: true
