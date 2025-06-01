@@ -175,7 +175,7 @@ const OpenProjectWorkPackageBlockComponent = () => {
 
     try {
       const response = await fetchAPI(
-        `op/api/v3/work_packages?filters=[{"id":{"operator":"=","values":["${searchQuery}"]}}]`,
+        `op/api/v3/work_packages?filters=[{"typeahead":{"operator":"**","values":["${searchQuery}"]}}]`,
         {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },

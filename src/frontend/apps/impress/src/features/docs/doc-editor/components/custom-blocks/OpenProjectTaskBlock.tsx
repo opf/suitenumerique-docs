@@ -11,11 +11,13 @@ import {
 import { fetchAPI } from '@/api';
 import { Icon } from '@/components';
 
-const OPENPROJECT_TASK_PROJECT_ID = '1'; // TODO: Replace with your actual project ID
-const OPENPROJECT_TASK_TYPE_ID = '1'; // TODO: Replace with your actual "task" type ID
-const UI_BLUE = '#000091'; // Default color for task status icons
-const UI_BEIGE = '#FBF5F2';
-const UI_GRAY = '#3a3a3a';
+import {
+  OPENPROJECT_TASK_PROJECT_ID,
+  OPENPROJECT_TASK_TYPE_ID,
+  UI_BEIGE,
+  UI_BLUE,
+  UI_GRAY,
+} from './OpenProjectBlockSettings';
 
 interface Status {
   id: string;
