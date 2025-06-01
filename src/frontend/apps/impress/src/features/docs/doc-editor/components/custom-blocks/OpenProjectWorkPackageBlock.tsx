@@ -1,7 +1,7 @@
 import { insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import { TFunction } from 'i18next';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { fetchAPI } from '@/api';
@@ -29,8 +29,35 @@ interface WorkPackageCollection {
   };
 }
 
+interface OpenProjectResponse {
+  _embedded?: {
+    elements?: Array<{
+      id: string;
+      name: string;
+      _links?: { self: { href: string } };
+    }>;
+  };
+}
+
+interface BlockProps {
+  props: {
+    wpid: string;
+    subject: string;
+    status: string;
+    assignee: string;
+    type: string;
+    href: string;
+  };
+}
+
 // Component implementation
-const OpenProjectWorkPackageBlockComponent = ({ block, editor }: any) => {
+const OpenProjectWorkPackageBlockComponent = ({
+  block,
+  editor,
+}: {
+  block: BlockProps;
+  editor: any; // Using any here to avoid type conflicts with BlockNoteEditor
+}) => {
   const { t } = useTranslation();
   const [mode, setMode] = useState<'search' | 'create'>('search');
 
@@ -39,6 +66,10 @@ const OpenProjectWorkPackageBlockComponent = ({ block, editor }: any) => {
   const [searchResults, setSearchResults] = useState<WorkPackage[]>([]);
   const [selectedWorkPackage, setSelectedWorkPackage] =
     useState<WorkPackage | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [focusedResultIndex, setFocusedResultIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Creation mode state
   const [projects, setProjects] = useState<Array<{ id: string; name: string }>>(
@@ -98,11 +129,12 @@ const OpenProjectWorkPackageBlockComponent = ({ block, editor }: any) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json();
+        const data = await response.json() as OpenProjectResponse;
+        
         // OpenProject returns statuses in _embedded.elements
-        if (isMounted && data && data._embedded && data._embedded.elements) {
+        if (isMounted && data._embedded?.elements) {
           setStatuses(
-            data._embedded.elements as Array<{
+            data._embedded.elements.filter(item => item._links?.self?.href) as Array<{
               id: string;
               name: string;
               _links: { self: { href: string } };
@@ -145,11 +177,12 @@ const OpenProjectWorkPackageBlockComponent = ({ block, editor }: any) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json();
+        const data = await response.json() as OpenProjectResponse;
+        
         // OpenProject returns types in _embedded.elements
-        if (isMounted && data && data._embedded && data._embedded.elements) {
+        if (isMounted && data._embedded?.elements) {
           setTypes(
-            data._embedded.elements as Array<{
+            data._embedded.elements.filter(item => item._links?.self?.href) as Array<{
               id: string;
               name: string;
               _links: { self: { href: string } };
@@ -187,11 +220,15 @@ const OpenProjectWorkPackageBlockComponent = ({ block, editor }: any) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json();
+        const data = await response.json() as OpenProjectResponse;
+        
         // OpenProject returns projects in _embedded.elements
-        if (isMounted && data && data._embedded && data._embedded.elements) {
+        if (isMounted && data._embedded?.elements) {
           setProjects(
-            data._embedded.elements as Array<{ id: string; name: string }>,
+            data._embedded.elements.map(item => ({
+              id: item.id,
+              name: item.name
+            })),
           );
         } else if (isMounted) {
           setProjects([]);
@@ -210,9 +247,30 @@ const OpenProjectWorkPackageBlockComponent = ({ block, editor }: any) => {
     };
   }, [mode]);
 
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Debounced search function
   const handleSearch = useCallback(async () => {
     if (!searchQuery) {
       setSearchResults([]);
+      setIsDropdownOpen(false);
       return;
     }
 
@@ -233,20 +291,36 @@ const OpenProjectWorkPackageBlockComponent = ({ block, editor }: any) => {
 
       if (data && data._embedded && data._embedded.elements) {
         setSearchResults(data._embedded.elements);
+        setIsDropdownOpen(data._embedded.elements.length > 0);
+        setFocusedResultIndex(-1);
       } else {
         console.error('Invalid API response:', data);
         setSearchResults([]);
+        setIsDropdownOpen(false);
       }
     } catch (error) {
       console.error('Error fetching work packages:', error);
       setSearchResults([]);
+      setIsDropdownOpen(false);
     }
   }, [searchQuery]);
 
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery) {
+        void handleSearch();
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, handleSearch]);
+
   // Handle selection of a work package from search results
   const handleSelectWorkPackage = (workPackage: WorkPackage) => {
-    console.log('work package selected');
     setSelectedWorkPackage(workPackage);
+    setSearchQuery(''); // Clear search input after selection
+    setIsDropdownOpen(false);
 
     // Update block props to persist the selection
     editor.updateBlock(block, {
@@ -260,6 +334,41 @@ const OpenProjectWorkPackageBlockComponent = ({ block, editor }: any) => {
         href: workPackage._links?.self?.href || '',
       },
     });
+  };
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isDropdownOpen) {
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setFocusedResultIndex((prev) =>
+          prev < searchResults.length - 1 ? prev + 1 : prev,
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setFocusedResultIndex((prev) => (prev > 0 ? prev - 1 : 0));
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (
+          focusedResultIndex >= 0 &&
+          focusedResultIndex < searchResults.length
+        ) {
+          handleSelectWorkPackage(searchResults[focusedResultIndex]);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setIsDropdownOpen(false);
+        break;
+      default:
+        break;
+    }
   };
 
   return (
@@ -279,44 +388,92 @@ const OpenProjectWorkPackageBlockComponent = ({ block, editor }: any) => {
 
       {mode === 'search' && (
         <div>
-          <input
-            type="text"
-            placeholder={t('Search for work package ID or subject')}
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-            }}
-            onKeyUp={() => {
-              void handleSearch();
-            }}
-          />
+          <div style={{ position: 'relative' }}>
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder={t('Search for work package ID or subject')}
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (e.target.value) {
+                  setIsDropdownOpen(true);
+                }
+              }}
+              onFocus={() => {
+                if (searchResults.length > 0) {
+                  setIsDropdownOpen(true);
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                border: '1px solid #ccc',
+                fontSize: '14px',
+              }}
+            />
 
-          {/* Display search results as a select menu */}
-          {searchResults.length > 0 && (
-            <div style={{ marginTop: 12 }}>
-              <select
-                onChange={(e) => {
-                  const selected = searchResults.find(
-                    (wp) => wp.id == e.target.value,
-                  );
-                  console.log('selected', selected);
-                  console.log('searchResults', searchResults);
-                  if (selected) {
-                    handleSelectWorkPackage(selected);
-                  }
+            {/* Autocomplete dropdown */}
+            {isDropdownOpen && searchResults.length > 0 && (
+              <div
+                ref={dropdownRef}
+                role="listbox"
+                aria-label={t('Work package search results')}
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  zIndex: 10,
+                  backgroundColor: 'white',
+                  border: '1px solid #ccc',
+                  borderRadius: '0 0 4px 4px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  marginTop: '2px',
                 }}
-                value={selectedWorkPackage?.id || ''}
-                style={{ width: '100%', marginBottom: 12 }}
               >
-                <option value="">{t('Select a work package')}</option>
-                {searchResults.slice(0, 5).map((wp) => (
-                  <option key={wp.id} value={wp.id}>
-                    #{wp.id} - {wp.subject}
-                  </option>
+                {searchResults.slice(0, 5).map((wp, index) => (
+                  <div
+                    key={wp.id}
+                    role="option"
+                    aria-selected={focusedResultIndex === index}
+                    tabIndex={0}
+                    onClick={() => handleSelectWorkPackage(wp)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleSelectWorkPackage(wp);
+                      }
+                    }}
+                    onMouseEnter={() => setFocusedResultIndex(index)}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      backgroundColor:
+                        focusedResultIndex === index
+                          ? '#f0f0f0'
+                          : 'transparent',
+                      borderBottom:
+                        index < searchResults.length - 1
+                          ? '1px solid #eee'
+                          : 'none',
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold' }}>
+                      #{wp.id} - {wp.subject}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      {wp._links?.type?.title} {wp._links?.status?.title}
+                    </div>
+                  </div>
                 ))}
-              </select>
-            </div>
-          )}
+              </div>
+            )}
+          </div>
 
           {/* Display selected work package details */}
           {selectedWorkPackage && (
