@@ -12,6 +12,7 @@ import {
 } from '@openfun/cunningham-react';
 import { PropsWithChildren, ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { RiCheckLine, RiFileTextLine } from 'react-icons/ri';
 
 import { isAPIError } from '@/api';
 import { Icon } from '@/components';
@@ -51,19 +52,19 @@ export function OPAIButton() {
           mainTooltip={t('OpenProect AI Actions')}
           icon={<Icon iconName="auto_awesome" $size="l" />}
         >
-          OP Magic
+          OpenProject
         </Components.FormattingToolbar.Button>
       </Components.Generic.Menu.Trigger>
       <Components.Generic.Menu.Dropdown
         className="bn-menu-dropdown bn-drag-handle-menu --docs--ai-actions-menu"
         sub={true}
       >
-        <AIMenuItemOPFeatureTransform docId={currentDoc.id}>
-          {t('Transform to feature')}
-        </AIMenuItemOPFeatureTransform>
         <AIMenuItemConvertToTasks docId={currentDoc.id}>
-          {t('')}
+          {t(' ')}
         </AIMenuItemConvertToTasks>
+        <AIMenuItemOPFeatureTransform docId={currentDoc.id}>
+          {t(' ')}
+        </AIMenuItemOPFeatureTransform>
       </Components.Generic.Menu.Dropdown>
     </Components.Generic.Menu.Root>
   );
@@ -122,7 +123,8 @@ const AIMenuItemConvertToTasks = ({
     <AIMenuItem
       requestAI={handleConvertToTasks}
       isPending={isPending}
-      label="Convert to TASK(s)"
+      label="Convert to task(s)"
+      icon={<RiCheckLine />}
     >
       {children}
     </AIMenuItem>
@@ -164,7 +166,8 @@ const AIMenuItemOPFeatureTransform = ({
       <AIMenuItem
         requestAI={requestAIAction}
         isPending={isPending}
-        label="Convert to FEATURE"
+        label="Convert to feature"
+        icon={<RiFileTextLine />}
       ></AIMenuItem>
     </>
   );

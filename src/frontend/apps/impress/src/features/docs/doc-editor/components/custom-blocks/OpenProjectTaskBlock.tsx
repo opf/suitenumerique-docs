@@ -1,6 +1,7 @@
 import { insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import React, { useRef, useState } from 'react';
+import { RiCheckLine, RiCheckboxBlankCircleLine } from 'react-icons/ri';
 
 import { fetchAPI } from '@/api';
 import { Icon } from '@/components';
@@ -286,7 +287,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
       style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 32 }}
       data-block-id={block.id}
     >
-      <span style={{ fontSize: 20, userSelect: 'none' }}>▣</span>
+      <RiCheckboxBlankCircleLine />
       {renderId()}
       <input
         ref={inputRef}
@@ -311,37 +312,6 @@ export const OpenProjectTaskBlockComponent: React.FC<{
           <Icon iconName="error" $size="16px" />
         </span>
       )}
-      {/* TEMP: Button to fetch and log available work package types */}
-      <button
-        type="button"
-        style={{ marginLeft: 8, fontSize: 12, padding: '2px 6px' }}
-        onClick={async () => {
-          const resp = await fetchAPI(
-            `op/api/v3/projects/${OPENPROJECT_TASK_PROJECT_ID}/types`,
-            {
-              method: 'GET',
-              headers: { 'Content-Type': 'application/json' },
-            },
-          );
-          if (resp.ok) {
-            const data = await resp.json();
-            // Log all types to the console
-            // Each type: { id, name }
-            // Example: { id: 1, name: "Task" }
-            // Use the id for OPENPROJECT_TASK_TYPE_ID
-            // eslint-disable-next-line no-console
-            console.log(
-              'Available work package types:',
-              data._embedded?.elements,
-            );
-            alert('Check the console for available work package types.');
-          } else {
-            alert('Failed to fetch types');
-          }
-        }}
-      >
-        Log Types
-      </button>
     </div>
   );
 };
@@ -735,7 +705,7 @@ export const getOpenProjectTaskBlockFormattingToolbarItems = (
 ): BlockTypeSelectItem => ({
   name: t('OpenProject Task'),
   type: 'openProjectTask',
-  icon: () => <Icon iconName="task" $size="16px" />,
+  icon: () => <RiCheckLine />,
   isSelected: (block) => {
     console.log('Checking if block is OpenProject task:', block);
     return block.type === 'openProjectTask';
