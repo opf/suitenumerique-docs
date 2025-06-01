@@ -14,6 +14,8 @@ import { Icon } from '@/components';
 const OPENPROJECT_TASK_PROJECT_ID = '1'; // TODO: Replace with your actual project ID
 const OPENPROJECT_TASK_TYPE_ID = '1'; // TODO: Replace with your actual "task" type ID
 const UI_BLUE = '#000091'; // Default color for task status icons
+const UI_BEIGE = '#FBF5F2';
+const UI_GRAY = '#3a3a3a';
 
 interface Status {
   id: string;
@@ -393,7 +395,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
     process.env.OPEN_PROJECT_HOST || 'https://openproject.local';
   const renderId = () => {
     if (!taskId) {
-      return <span style={{ color: '#aaa' }}>NEW</span>;
+      return <span style={{ color: '#ccc', fontStyle: 'italic' }}>New</span>;
     }
     const url = `${OPENPROJECT_HOST}/wp/${taskId}`;
     return (
@@ -401,8 +403,8 @@ export const OpenProjectTaskBlockComponent: React.FC<{
         href={url}
         style={{
           marginRight: 6,
-          textDecoration: 'underline',
-          color: '#1976d2',
+          textDecoration: 'none',
+          color: UI_BLUE,
           cursor: 'pointer',
         }}
         onClick={(e) => {
@@ -410,6 +412,12 @@ export const OpenProjectTaskBlockComponent: React.FC<{
           e.stopPropagation();
           window.open(url, '_blank');
         }}
+        // eslint-disable-next-line jsx-a11y/mouse-events-have-key-events
+        onMouseOver={(e) =>
+          (e.currentTarget.style.textDecoration = 'underline')
+        }
+        // eslint-disable-next-line jsx-a11y/mouse-events-have-key-events
+        onMouseOut={(e) => (e.currentTarget.style.textDecoration = 'none')}
       >
         #{taskId}
       </a>
@@ -420,9 +428,12 @@ export const OpenProjectTaskBlockComponent: React.FC<{
   const renderStatusIcon = () => {
     if (!taskId) {
       return (
-        <span style={{ cursor: 'default' }} title="Task not yet created">
+        <div
+          style={{ cursor: 'default', display: 'flex' }}
+          title="Task not yet created"
+        >
           <RiCheckboxBlankCircleLine />
-        </span>
+        </div>
       );
     }
 
@@ -431,8 +442,15 @@ export const OpenProjectTaskBlockComponent: React.FC<{
       return <Icon iconName="spinner" $size="16px" />;
     }
 
-    const isClosed = block.props.statusIsClosed;
     const statusName = block.props.status || 'new';
+    const isClosed =
+      block.props.statusIsClosed || statusName.toLowerCase() == 'closed';
+
+    console.log('Current status:', {
+      statusName,
+      isClosed,
+      taskId,
+    });
 
     // Determine which icon to show based on status
     let StatusIcon = RiCheckboxBlankCircleLine; // Default for "new" status
@@ -444,7 +462,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
     }
 
     return (
-      <span
+      <div
         onClick={() => {
           setIsStatusDropdownOpen(!isStatusDropdownOpen);
           if (!isStatusDropdownOpen) {
@@ -454,11 +472,12 @@ export const OpenProjectTaskBlockComponent: React.FC<{
         style={{
           cursor: 'pointer',
           color: UI_BLUE,
+          display: 'flex',
         }}
         title={`Status: ${statusName}`}
       >
         <StatusIcon />
-      </span>
+      </div>
     );
   };
 
@@ -470,6 +489,9 @@ export const OpenProjectTaskBlockComponent: React.FC<{
         gap: 8,
         minHeight: 32,
         position: 'relative',
+        background: UI_BEIGE,
+        borderRadius: '5px',
+        padding: '4px 8px',
       }}
       data-block-id={block.id}
     >
@@ -490,6 +512,12 @@ export const OpenProjectTaskBlockComponent: React.FC<{
           outline: 'none',
           background: 'transparent',
           fontSize: 16,
+          width: '500px',
+          textDecoration:
+            block.props.statusIsClosed ||
+            (block.props.status || '').toLowerCase() === 'closed'
+              ? 'line-through'
+              : 'none',
         }}
       />
       {saving && <Icon iconName="spinner" $size="16px" />}
@@ -516,6 +544,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
             maxHeight: 300,
             overflowY: 'auto',
             marginTop: 4,
+            color: UI_GRAY,
           }}
         >
           {availableStatuses.length === 0 ? (
