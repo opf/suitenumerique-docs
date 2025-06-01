@@ -1,13 +1,28 @@
 import { insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
-import React, { useRef, useState } from 'react';
-import { RiCheckLine, RiCheckboxBlankCircleLine } from 'react-icons/ri';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  RiCheckLine,
+  RiCheckboxBlankCircleLine,
+  RiCheckboxCircleFill,
+  RiPlayCircleLine,
+} from 'react-icons/ri';
 
 import { fetchAPI } from '@/api';
 import { Icon } from '@/components';
 
 const OPENPROJECT_TASK_PROJECT_ID = '1'; // TODO: Replace with your actual project ID
 const OPENPROJECT_TASK_TYPE_ID = '1'; // TODO: Replace with your actual "task" type ID
+const UI_BLUE = '#000091'; // Default color for task status icons
+
+interface Status {
+  id: string;
+  name: string;
+  isClosed: boolean;
+  _links: {
+    self: { href: string };
+  };
+}
 
 export const OpenProjectTaskBlockComponent: React.FC<{
   block: any;
@@ -24,7 +39,14 @@ export const OpenProjectTaskBlockComponent: React.FC<{
   const [isFirstSave, setIsFirstSave] = useState(true); // Track if this is the first save
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch latest subject and lockVersion if taskId exists
+  // Status related state
+  const [currentStatus, setCurrentStatus] = useState<Status | null>(null);
+  const [availableStatuses, setAvailableStatuses] = useState<Status[]>([]);
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const [statusUpdateSaving, setStatusUpdateSaving] = useState(false);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch latest subject, status, and lockVersion if taskId exists
   React.useEffect(() => {
     if (taskId) {
       fetchAPI(`op/api/v3/work_packages/${taskId}`, {
@@ -38,9 +60,20 @@ export const OpenProjectTaskBlockComponent: React.FC<{
           const data = await response.json();
           setSubject(data.subject);
           setLockVersion(data.lockVersion);
+
+          // Set current status if available
+          if (data._links?.status) {
+            setCurrentStatus({
+              id: data._links.status.href.split('/').pop() || '',
+              name: data._links.status.title || 'Unknown',
+              isClosed: data.status?.isClosed || false,
+              _links: {
+                self: { href: data._links.status.href },
+              },
+            });
+          }
+
           // Update block props so markdown is in sync
-          console.log('OPENPROJECT_TASK_TYPE_ID', OPENPROJECT_TASK_TYPE_ID);
-          console.log('data.id', data.id);
           editor.updateBlock(block, {
             props: {
               ...block.props,
@@ -48,6 +81,8 @@ export const OpenProjectTaskBlockComponent: React.FC<{
               lockVersion: data.lockVersion,
               wpid: +data.id,
               wpurl: data._links?.self?.href || null,
+              status: data._links?.status?.title || null,
+              statusIsClosed: data.status?.isClosed || false,
             },
           });
         })
@@ -55,6 +90,105 @@ export const OpenProjectTaskBlockComponent: React.FC<{
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
+
+  // Fetch available statuses when dropdown is opened
+  const fetchAvailableStatuses = async () => {
+    if (!taskId) {
+      return;
+    }
+
+    setStatusUpdateSaving(true);
+    try {
+      const response = await fetchAPI(`op/api/v3/statuses`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data && data._embedded && data._embedded.elements) {
+        setAvailableStatuses(data._embedded.elements);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch available statuses');
+    } finally {
+      setStatusUpdateSaving(false);
+    }
+  };
+
+  // Update work package status
+  const updateStatus = async (status: Status) => {
+    if (!taskId) {
+      return;
+    }
+
+    setStatusUpdateSaving(true);
+    setError(null);
+    try {
+      const response = await fetchAPI(`op/api/v3/work_packages/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lockVersion: lockVersion,
+          _links: {
+            status: { href: status._links.self.href },
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 409) {
+          throw new Error('Update conflict: please reload the task.');
+        } else {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+      }
+
+      const data = await response.json();
+      setLockVersion(data.lockVersion);
+      setCurrentStatus(status);
+
+      // Update block props
+      editor.updateBlock(block, {
+        props: {
+          ...block.props,
+          lockVersion: data.lockVersion,
+          status: status.name,
+          statusIsClosed: status.isClosed,
+        },
+      });
+
+      // Close the dropdown
+      setIsStatusDropdownOpen(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update status');
+    } finally {
+      setStatusUpdateSaving(false);
+    }
+  };
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        statusDropdownRef.current &&
+        !statusDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsStatusDropdownOpen(false);
+      }
+    };
+
+    if (isStatusDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isStatusDropdownOpen]);
 
   // On mount: if subject is empty but block has inline content, move it to subject and create the task
   React.useEffect(() => {
@@ -282,12 +416,64 @@ export const OpenProjectTaskBlockComponent: React.FC<{
     );
   };
 
+  // Render status icon based on current status
+  const renderStatusIcon = () => {
+    if (!taskId) {
+      return (
+        <span style={{ cursor: 'default' }} title="Task not yet created">
+          <RiCheckboxBlankCircleLine />
+        </span>
+      );
+    }
+
+    // If status dropdown is open, show a loading spinner while fetching statuses
+    if (isStatusDropdownOpen && statusUpdateSaving) {
+      return <Icon iconName="spinner" $size="16px" />;
+    }
+
+    const isClosed = block.props.statusIsClosed;
+    const statusName = block.props.status || 'new';
+
+    // Determine which icon to show based on status
+    let StatusIcon = RiCheckboxBlankCircleLine; // Default for "new" status
+
+    if (isClosed) {
+      StatusIcon = RiCheckboxCircleFill;
+    } else if (statusName.toLowerCase() !== 'new') {
+      StatusIcon = RiPlayCircleLine;
+    }
+
+    return (
+      <span
+        onClick={() => {
+          setIsStatusDropdownOpen(!isStatusDropdownOpen);
+          if (!isStatusDropdownOpen) {
+            fetchAvailableStatuses();
+          }
+        }}
+        style={{
+          cursor: 'pointer',
+          color: UI_BLUE,
+        }}
+        title={`Status: ${statusName}`}
+      >
+        <StatusIcon />
+      </span>
+    );
+  };
+
   return (
     <div
-      style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 32 }}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        minHeight: 32,
+        position: 'relative',
+      }}
       data-block-id={block.id}
     >
-      <RiCheckboxBlankCircleLine />
+      {renderStatusIcon()}
       {renderId()}
       <input
         ref={inputRef}
@@ -312,6 +498,63 @@ export const OpenProjectTaskBlockComponent: React.FC<{
           <Icon iconName="error" $size="16px" />
         </span>
       )}
+
+      {/* Status dropdown */}
+      {isStatusDropdownOpen && taskId && !statusUpdateSaving && (
+        <div
+          ref={statusDropdownRef}
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            zIndex: 100,
+            backgroundColor: 'white',
+            border: '1px solid #ddd',
+            borderRadius: 4,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            width: 200,
+            maxHeight: 300,
+            overflowY: 'auto',
+            marginTop: 4,
+          }}
+        >
+          {availableStatuses.length === 0 ? (
+            <div style={{ padding: 8, color: '#666', textAlign: 'center' }}>
+              No status options available
+            </div>
+          ) : (
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              {availableStatuses.map((status) => (
+                <li
+                  key={status.id}
+                  onClick={() => updateStatus(status)}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #eee',
+                    backgroundColor:
+                      currentStatus?.id === status.id
+                        ? '#f0f7ff'
+                        : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  {status.name.toLowerCase() === 'new' ? (
+                    <RiCheckboxBlankCircleLine style={{ color: UI_BLUE }} />
+                  ) : status.isClosed ? (
+                    <RiCheckboxCircleFill style={{ color: UI_BLUE }} />
+                  ) : (
+                    <RiPlayCircleLine style={{ color: UI_BLUE }} />
+                  )}
+                  <span>{status.name}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -325,6 +568,9 @@ export const OpenProjectTaskBlock = createReactBlockSpec(
       subject: { default: '' },
       lockVersion: { default: null },
       parentId: { default: null },
+      status: { default: 'new' },
+      statusIsClosed: { default: false },
+      wpurl: { default: null },
     },
     content: 'inline',
   },
