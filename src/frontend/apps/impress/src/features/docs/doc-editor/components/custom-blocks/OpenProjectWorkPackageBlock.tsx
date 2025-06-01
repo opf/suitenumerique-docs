@@ -29,28 +29,57 @@ interface WorkPackageCollection {
   };
 }
 
-const OpenProjectWorkPackageBlockComponent = () => {
+// Component implementation
+const OpenProjectWorkPackageBlockComponent = ({ block, editor }: any) => {
   const { t } = useTranslation();
   const [mode, setMode] = useState<'search' | 'create'>('search');
 
   // Search mode state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<WorkPackage[]>([]);
+  const [selectedWorkPackage, setSelectedWorkPackage] =
+    useState<WorkPackage | null>(null);
 
   // Creation mode state
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>(
+    [],
+  );
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   // Types for selected project
-  const [types, setTypes] = useState<any[]>([]);
+  const [types, setTypes] = useState<
+    Array<{ id: string; name: string; _links: { self: { href: string } } }>
+  >([]);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   // Statuses, subject, description, saving
-  const [statuses, setStatuses] = useState<any[]>([]);
+  const [statuses, setStatuses] = useState<
+    Array<{ id: string; name: string; _links: { self: { href: string } } }>
+  >([]);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+
+  // Load saved work package if it exists
+  React.useEffect(() => {
+    if (block.props.wpid) {
+      void fetchAPI(`op/api/v3/work_packages/${block.props.wpid}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            return;
+          }
+          const data = await response.json();
+          setSelectedWorkPackage(data as WorkPackage);
+        })
+        .catch((error) => {
+          console.error('Error fetching work package:', error);
+        });
+    }
+  }, [block.props.wpid]);
 
   // Fetch statuses when a type is selected
   React.useEffect(() => {
@@ -72,7 +101,13 @@ const OpenProjectWorkPackageBlockComponent = () => {
         const data = await response.json();
         // OpenProject returns statuses in _embedded.elements
         if (isMounted && data && data._embedded && data._embedded.elements) {
-          setStatuses(data._embedded.elements);
+          setStatuses(
+            data._embedded.elements as Array<{
+              id: string;
+              name: string;
+              _links: { self: { href: string } };
+            }>,
+          );
         } else if (isMounted) {
           setStatuses([]);
         }
@@ -84,7 +119,7 @@ const OpenProjectWorkPackageBlockComponent = () => {
         console.error('Error fetching statuses:', error);
       }
     };
-    fetchStatuses();
+    void fetchStatuses();
     return () => {
       isMounted = false;
     };
@@ -113,7 +148,13 @@ const OpenProjectWorkPackageBlockComponent = () => {
         const data = await response.json();
         // OpenProject returns types in _embedded.elements
         if (isMounted && data && data._embedded && data._embedded.elements) {
-          setTypes(data._embedded.elements);
+          setTypes(
+            data._embedded.elements as Array<{
+              id: string;
+              name: string;
+              _links: { self: { href: string } };
+            }>,
+          );
         } else if (isMounted) {
           setTypes([]);
         }
@@ -125,7 +166,7 @@ const OpenProjectWorkPackageBlockComponent = () => {
         console.error('Error fetching types:', error);
       }
     };
-    fetchTypes();
+    void fetchTypes();
     return () => {
       isMounted = false;
     };
@@ -149,7 +190,9 @@ const OpenProjectWorkPackageBlockComponent = () => {
         const data = await response.json();
         // OpenProject returns projects in _embedded.elements
         if (isMounted && data && data._embedded && data._embedded.elements) {
-          setProjects(data._embedded.elements);
+          setProjects(
+            data._embedded.elements as Array<{ id: string; name: string }>,
+          );
         } else if (isMounted) {
           setProjects([]);
         }
@@ -161,7 +204,7 @@ const OpenProjectWorkPackageBlockComponent = () => {
         console.error('Error fetching projects:', error);
       }
     };
-    fetchProjects();
+    void fetchProjects();
     return () => {
       isMounted = false;
     };
@@ -200,6 +243,25 @@ const OpenProjectWorkPackageBlockComponent = () => {
     }
   }, [searchQuery]);
 
+  // Handle selection of a work package from search results
+  const handleSelectWorkPackage = (workPackage: WorkPackage) => {
+    console.log('work package selected');
+    setSelectedWorkPackage(workPackage);
+
+    // Update block props to persist the selection
+    editor.updateBlock(block, {
+      props: {
+        ...block.props,
+        wpid: workPackage.id,
+        subject: workPackage.subject,
+        status: workPackage._links?.status?.title || '',
+        assignee: workPackage._links?.assignee?.title || '',
+        type: workPackage._links?.type?.title || '',
+        href: workPackage._links?.self?.href || '',
+      },
+    });
+  };
+
   return (
     <div>
       <div style={{ marginBottom: 12 }}>
@@ -229,26 +291,63 @@ const OpenProjectWorkPackageBlockComponent = () => {
             }}
           />
 
+          {/* Display search results as a select menu */}
           {searchResults.length > 0 && (
-            <div>
-              <div>
-                <h3>{searchResults[0].subject}</h3>
-                <p>
-                  {t('Type')}: {searchResults[0]._links?.type?.title}
-                </p>
-                <p>
-                  {t('Status')}: {searchResults[0]._links?.status?.title}
-                </p>
-                <p>
-                  {t('Assignee')}: {searchResults[0]._links?.assignee?.title}
-                </p>
-                <p>
-                  {t('Link')}:{' '}
-                  <a href={searchResults[0]._links?.self?.href}>
-                    {searchResults[0].id}
-                  </a>
-                </p>
-              </div>
+            <div style={{ marginTop: 12 }}>
+              <select
+                onChange={(e) => {
+                  const selected = searchResults.find(
+                    (wp) => wp.id == e.target.value,
+                  );
+                  console.log('selected', selected);
+                  console.log('searchResults', searchResults);
+                  if (selected) {
+                    handleSelectWorkPackage(selected);
+                  }
+                }}
+                value={selectedWorkPackage?.id || ''}
+                style={{ width: '100%', marginBottom: 12 }}
+              >
+                <option value="">{t('Select a work package')}</option>
+                {searchResults.slice(0, 5).map((wp) => (
+                  <option key={wp.id} value={wp.id}>
+                    #{wp.id} - {wp.subject}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Display selected work package details */}
+          {selectedWorkPackage && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: 12,
+                border: '1px solid #ddd',
+                borderRadius: 4,
+              }}
+            >
+              <h3>{selectedWorkPackage.subject}</h3>
+              <p>
+                {t('Type')}: {selectedWorkPackage._links?.type?.title}
+              </p>
+              <p>
+                {t('Status')}: {selectedWorkPackage._links?.status?.title}
+              </p>
+              <p>
+                {t('Assignee')}: {selectedWorkPackage._links?.assignee?.title}
+              </p>
+              <p>
+                {t('Link')}:{' '}
+                <a
+                  href={selectedWorkPackage._links?.self?.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  #{selectedWorkPackage.id}
+                </a>
+              </p>
             </div>
           )}
         </div>
@@ -357,9 +456,9 @@ const OpenProjectWorkPackageBlockComponent = () => {
                     setSaving(true);
                     // Save work package
                     // Find selected type and status objects for hrefs
-                    const typeObj = types.find((t) => t.id == selectedType);
+                    const typeObj = types.find((t) => t.id === selectedType);
                     const statusObj = statuses.find(
-                      (s) => s.id == selectedStatus,
+                      (s) => s.id === selectedStatus,
                     );
                     console.log('types:', types);
                     console.log('statuses:', statuses);
@@ -372,7 +471,7 @@ const OpenProjectWorkPackageBlockComponent = () => {
                       setSaving(false);
                       return;
                     }
-                    fetchAPI(
+                    void fetchAPI(
                       `op/api/v3/projects/${selectedProject}/work_packages`,
                       {
                         method: 'POST',
@@ -401,13 +500,13 @@ const OpenProjectWorkPackageBlockComponent = () => {
                         setSelectedType(null);
                         // Optionally, reset project selection as well
                       })
-                      .catch((error) => {
+                      .catch((error: unknown) => {
                         // eslint-disable-next-line no-console
                         console.error('Error creating work package:', error);
                         setSaveError(
                           t('Failed to create work package:') +
                             ' ' +
-                            (error?.message || error),
+                            ((error as Error)?.message || String(error)),
                         );
                       })
                       .finally(() => {
@@ -437,12 +536,21 @@ const OpenProjectWorkPackageBlockComponent = () => {
 export const OpenProjectWorkPackageBlock = createReactBlockSpec(
   {
     type: 'openProjectWorkPackage',
-    propSchema: {},
+    propSchema: {
+      wpid: { default: '', type: 'string' },
+      subject: { default: '', type: 'string' },
+      status: { default: '', type: 'string' },
+      assignee: { default: '', type: 'string' },
+      type: { default: '', type: 'string' },
+      href: { default: '', type: 'string' },
+    },
     content: 'inline',
   },
   {
-    render: () => {
-      return <OpenProjectWorkPackageBlockComponent />;
+    render: ({ block, editor }) => {
+      return (
+        <OpenProjectWorkPackageBlockComponent block={block} editor={editor} />
+      );
     },
   },
 );
