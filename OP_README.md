@@ -19,3 +19,11 @@ make run-backend
 # Running the tls-ready stack and access docs at docs.local
 TLS=true make run
 ```
+
+#### Additional things to setup
+
+- amend `common` with the right urls (`openproject.local`, `keycloak.local`, `docs.local`)
+- configure keycloak with new client
+  - name impress
+  - add client scope `api_v3` as default
+  - add a audience mapper to client scope for `openproject` audience

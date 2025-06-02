@@ -31,6 +31,8 @@ services:
       - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
       - DJANGO_CSRF_TRUSTED_ORIGINS=https://docs.local
       - DJANGO_PATH_PREFIX=/backend
+      - OIDC_STORE_ACCESS_TOKEN=true
+      - OPEN_PROJECT_HOST=https://openproject.local
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.docs-backend.rule=Host(`docs.local`) && PathPrefix(`/backend`)"
