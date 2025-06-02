@@ -216,7 +216,9 @@ export const OpenProjectTaskBlockComponent: React.FC<{
   // Focus input after mount or when taskId changes (after creation)
   React.useEffect(() => {
     if (inputRef.current) {
-      setTimeout(() => inputRef?.current?.focus(), 50);
+      if (!taskId) {
+        setTimeout(() => inputRef?.current?.focus(), 50);
+      }
     }
   }, [taskId]);
 
@@ -320,6 +322,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
     if (subject.trim() === '') {
       return;
     }
+    console.log('OnBlur');
 
     // Save the task and get whether it was a first save (creation)
     const wasFirstSave = await saveTask(subject.trim());
@@ -331,16 +334,18 @@ export const OpenProjectTaskBlockComponent: React.FC<{
       setIsFirstSave(false); // Mark that we've handled the first save
 
       // Automatically insert a new task block below
-      const newBlockId = insertOrUpdateBlock(editor, {
-        type: 'openProjectTask',
-        props: {
-          parentId: block.props.parentId, // Inherit parent ID from current block
-        },
-      });
+      const newBlocks = editor.insertBlocks(
+        [{ type: 'openProjectTask' }],
+        block,
+        'after',
+      );
+      const newBlockId = newBlocks[0]?.id;
 
-      // Focus the new input with a more reliable approach
       setTimeout(() => {
-        console.log('Attempting to focus new task block input:', newBlockId);
+        console.log(
+          'Attempting to focus new task block input:',
+          newBlocks[0]?.id,
+        );
         // Use a more specific selector to find the input
         const input = document.querySelector(
           `[data-block-id="${newBlockId}"] input[type="text"]`,
@@ -374,6 +379,8 @@ export const OpenProjectTaskBlockComponent: React.FC<{
       await handleSave();
       // The handleSave function will automatically insert a new block if needed
       // We don't need to insert another block here as it would create duplicates
+    } else if (e.key === 'Escape' && !block.props?.wpid) {
+      editor.removeBlocks([block.id]);
     }
   };
 
