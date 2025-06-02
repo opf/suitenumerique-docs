@@ -40,7 +40,7 @@ import {
   QuoteBlock,
 } from './custom-blocks';
 import { getOpenProjectMenuItems } from './custom-blocks/OpenProjectMenu';
-import { OpenProjectWorkPackageInline } from './custom-blocks/OpenProjectWorkPackageInline';
+// import { OpenProjectWorkPackageInline } from './custom-blocks/OpenProjectWorkPackageInline';
 
 export const blockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
@@ -51,10 +51,10 @@ export const blockNoteSchema = withPageBreak(
       openProjectWorkPackage: OpenProjectWorkPackageBlock,
       openProjectTask: OpenProjectTaskBlock,
     },
-    inlineContentSpecs: {
-      ...defaultInlineContentSpecs,
-      openProjectWorkPackageInline: OpenProjectWorkPackageInline,
-    },
+    // inlineContentSpecs: {
+    //   ...defaultInlineContentSpecs,
+    //   openProjectWorkPackageInline: OpenProjectWorkPackageInline,
+    // },
   }),
 );
 

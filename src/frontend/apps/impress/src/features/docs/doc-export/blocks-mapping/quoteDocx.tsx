@@ -8,11 +8,11 @@ export const blockMappingQuoteDocx: DocsExporterDocx['mappings']['blockMapping']
     if (Array.isArray(block.content)) {
       block.content.forEach((content) => {
         if (content.type === 'text') {
-          content.styles = {
-            ...content.styles,
-            italic: true,
-            textColor: 'gray',
-          };
+          // content.styles = {
+          //   ...content.styles,
+          //   italic: true,
+          //   textColor: 'gray',
+          // };
         }
       });
     }

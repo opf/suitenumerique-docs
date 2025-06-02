@@ -7,3 +7,7 @@ export * from './paragraphPDF';
 export * from './quoteDocx';
 export * from './quotePDF';
 export * from './tablePDF';
+export * from './openProjectTaskDocx';
+export * from './openProjectWorkPackageDocx';
+export * from './openProjectTaskPdf';
+export * from './openProjectWorkPackagePDF';

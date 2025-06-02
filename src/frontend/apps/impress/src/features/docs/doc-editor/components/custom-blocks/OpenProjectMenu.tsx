@@ -35,16 +35,16 @@ export const getOpenProjectMenuItems = async (
   return workpackages.map((wp) => ({
     title: '#' + wp.id + ' ' + wp.subject,
     onItemClick: () => {
-      editor.insertInlineContent([
-        {
-          type: 'openProjectWorkPackageInline',
-          props: {
-            wpid: wp.id || '',
-            subject: wp.subject || '',
-          },
-        },
-        ' ', // add a space after the mention
-      ]);
+      // editor.insertInlineContent([
+      //   {
+      //     type: 'openProjectWorkPackageInline',
+      //     props: {
+      //       wpid: wp.id || '',
+      //       subject: wp.subject || '',
+      //     },
+      //   },
+      //   ' ', // add a space after the mention
+      // ]);
     },
   }));
 };
