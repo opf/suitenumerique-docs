@@ -8,9 +8,12 @@ import { fetchAPI } from '@/api';
 import { Icon } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
-import { UI_BEIGE, UI_BLUE, WorkPackage, WorkPackageCollection } from './OpenProjectBlockCommon';
-
-
+import {
+  UI_BEIGE,
+  UI_BLUE,
+  WorkPackage,
+  WorkPackageCollection,
+} from './OpenProjectBlockCommon';
 
 interface OpenProjectResponse {
   _embedded?: {
@@ -66,7 +69,12 @@ const OpenProjectWorkPackageBlockComponent = ({
   const [selectedType, setSelectedType] = useState<string | null>(null);
   // Statuses, subject, description, saving
   const [statuses, setStatuses] = useState<
-    Array<{ id: string; color: string; name: string; _links: { self: { href: string } } }>
+    Array<{
+      id: string;
+      color: string;
+      name: string;
+      _links: { self: { href: string } };
+    }>
   >([]);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [subject, setSubject] = useState('');
@@ -112,12 +120,14 @@ const OpenProjectWorkPackageBlockComponent = ({
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json() as OpenProjectResponse;
-        
+        const data = (await response.json()) as OpenProjectResponse;
+
         // OpenProject returns statuses in _embedded.elements
         if (isMounted && data._embedded?.elements) {
           setStatuses(
-            data._embedded.elements.filter(item => item._links?.self?.href) as Array<{
+            data._embedded.elements.filter(
+              (item) => item._links?.self?.href,
+            ) as Array<{
               id: string;
               name: string;
               _links: { self: { href: string } };
@@ -160,12 +170,14 @@ const OpenProjectWorkPackageBlockComponent = ({
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json() as OpenProjectResponse;
-        
+        const data = (await response.json()) as OpenProjectResponse;
+
         // OpenProject returns types in _embedded.elements
         if (isMounted && data._embedded?.elements) {
           setTypes(
-            data._embedded.elements.filter(item => item._links?.self?.href) as Array<{
+            data._embedded.elements.filter(
+              (item) => item._links?.self?.href,
+            ) as Array<{
               id: string;
               name: string;
               _links: { self: { href: string } };
@@ -203,14 +215,14 @@ const OpenProjectWorkPackageBlockComponent = ({
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json() as OpenProjectResponse;
-        
+        const data = (await response.json()) as OpenProjectResponse;
+
         // OpenProject returns projects in _embedded.elements
         if (isMounted && data._embedded?.elements) {
           setProjects(
-            data._embedded.elements.map(item => ({
+            data._embedded.elements.map((item) => ({
               id: item.id,
-              name: item.name
+              name: item.name,
             })),
           );
         } else if (isMounted) {
@@ -371,45 +383,45 @@ const OpenProjectWorkPackageBlockComponent = ({
         >
           {t('Search Work Package')}
         </button> */}
-        
       </div>
 
       {mode === 'search' && (
         <div>
           {!block.props.wpid && (
             <div style={{ position: 'relative' }}>
-              <div style={{
-                display: 'flex'
-                }}
-                >
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder={t('Search for work package ID or subject')}
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  if (e.target.value) {
-                    setIsDropdownOpen(true);
-                  }
-                }}
-                onFocus={() => {
-                  if (searchResults.length > 0) {
-                    setIsDropdownOpen(true);
-                  }
-                }}
-                onKeyDown={handleKeyDown}
+              <div
                 style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc',
-                  fontSize: '14px',
+                  display: 'flex',
                 }}
-              />
-              <button onClick={() => setMode('create')}>
-                {t('New Work Package')}
-              </button>
+              >
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder={t('Search for work package ID or subject')}
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    if (e.target.value) {
+                      setIsDropdownOpen(true);
+                    }
+                  }}
+                  onFocus={() => {
+                    if (searchResults.length > 0) {
+                      setIsDropdownOpen(true);
+                    }
+                  }}
+                  onKeyDown={handleKeyDown}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    border: '1px solid #ccc',
+                    fontSize: '14px',
+                  }}
+                />
+                <button onClick={() => setMode('create')}>
+                  {t('New Work Package')}
+                </button>
               </div>
 
               {/* Autocomplete dropdown */}
@@ -474,12 +486,13 @@ const OpenProjectWorkPackageBlockComponent = ({
           )}
           {block.props.wpid && !selectedWorkPackage && (
             <div
-            style={{
-              padding: '4px 8px',
-              border: 'none',
-              borderRadius: '5px',
-              backgroundColor: UI_BEIGE
-            }}>
+              style={{
+                padding: '4px 8px',
+                border: 'none',
+                borderRadius: '5px',
+                backgroundColor: UI_BEIGE,
+              }}
+            >
               loading... #{block.props.wpid}
             </div>
           )}
@@ -490,32 +503,32 @@ const OpenProjectWorkPackageBlockComponent = ({
                 padding: '4px 8px',
                 border: 'none',
                 borderRadius: '5px',
-                backgroundColor: UI_BEIGE
+                backgroundColor: UI_BEIGE,
               }}
             >
-              <div style={{
-                display: 'flex',
-                gap: '8px'
-              }}>
-                <div style={{
-                  color: selectedWorkPackage._links?.type?.color,
-                  border: 'none',
-                  borderRadius: '5px',
-                  backgroundColor: UI_BEIGE
-               }}>
-                
-                {selectedWorkPackage._links?.type?.color} - 
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                }}
+              >
+                <div
+                  style={{
+                    color: selectedWorkPackage._links?.type?.color,
+                    border: 'none',
+                    borderRadius: '5px',
+                    backgroundColor: UI_BEIGE,
+                  }}
+                >
+                  {selectedWorkPackage._links?.type?.color} -
                   {selectedWorkPackage._links?.type?.title}
                 </div>
+                <div>#{selectedWorkPackage.id}</div>
                 <div>
-                  #{selectedWorkPackage.id}
-                </div>
-                <div>
-                  {selectedWorkPackage._links?.status?.color} - 
-
+                  {selectedWorkPackage._links?.status?.color} -
                   {selectedWorkPackage._links?.status?.title}
                 </div>
-              {/* <p>
+                {/* <p>
                 {t('Assignee')}: {selectedWorkPackage._links?.assignee?.title}
               </p> */}
               </div>

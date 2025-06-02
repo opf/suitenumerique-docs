@@ -1,4 +1,4 @@
-import { fetchAPI } from "@/api";
+import { fetchAPI } from '@/api';
 
 export const OPENPROJECT_TASK_PROJECT_ID = '1'; // TODO: Replace with your actual project ID
 export const OPENPROJECT_TASK_TYPE_ID = '1'; // TODO: Replace with your actual "task" type ID
@@ -21,9 +21,9 @@ export interface WorkPackage {
   lockVersion?: number | null;
   _links?: {
     self: { href: string };
-    status: { title: string, href: string } | null;
-    assignee: { title: string, href: string } | null;
-    type: { title: string, href: string } | null;
+    status: { title: string; href: string } | null;
+    assignee: { title: string; href: string } | null;
+    type: { title: string; href: string } | null;
   } | null;
   _embedded?: {
     status?: Status | null;
@@ -45,20 +45,21 @@ export interface Status {
   };
 }
 
-export const getWorkPackage = async (id: string): Promise<WorkPackage | null> => {
+export const getWorkPackage = async (
+  id: string,
+): Promise<WorkPackage | null> => {
   const data = await fetchAPI(`op/api/v3/work_packages/${id}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
-  })
-    .then(async (response) => {
-      if (!response.ok) {
-        return null;
-      }
-      const data = await response.json();
-      return data as WorkPackage;
-    })
+  }).then(async (response) => {
+    if (!response.ok) {
+      return null;
+    }
+    const data = await response.json();
+    return data as WorkPackage;
+  });
   return data;
-}
+};
 
 export const searchWorkPackages = async (searchQuery: string) => {
   try {

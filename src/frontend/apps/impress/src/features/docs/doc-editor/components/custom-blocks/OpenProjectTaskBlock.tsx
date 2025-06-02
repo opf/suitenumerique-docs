@@ -46,48 +46,49 @@ export const OpenProjectTaskBlockComponent: React.FC<{
   const statusDropdownRef = useRef<HTMLDivElement>(null);
 
   // Fetch latest subject, status, and lockVersion if taskId exists
-  React.useEffect(() => {
-    if (!taskId) {
-      return;
-    }
-    getWorkPackage(taskId)
-      .then(async (data: WorkPackage | null) => {
+  React.useEffect(
+    () => {
+      if (!taskId) {
+        return;
+      }
+      getWorkPackage(taskId)
+        .then(async (data: WorkPackage | null) => {
+          if (!data) {
+            console.error('Failed to fetch work package data');
+            return;
+          }
 
-        if (!data) {
-          console.error('Failed to fetch work package data');
-          return;
-        }
+          setSubject(data.subject);
+          setLockVersion(data.lockVersion);
 
-        setSubject(data.subject);
-        setLockVersion(data.lockVersion);
+          // Set current status if available
+          setCurrentStatus({
+            id: data._links?.status?.href.split('/').pop() || '',
+            name: data._links?.status?.title || 'Unknown',
+            isClosed: data._embedded?.status?.isClosed || false,
+            _links: {
+              self: { href: data._links?.status?.href || '' },
+            },
+          });
 
-        // Set current status if available
-        setCurrentStatus({
-          id: data._links?.status?.href.split('/').pop() || '',
-          name: data._links?.status?.title || 'Unknown',
-          isClosed: data._embedded?.status?.isClosed || false,
-          _links: {
-            self: { href: data._links?.status?.href || '' },
-          },
-        });
-
-        // Update block props so markdown is in sync
-        editor.updateBlock(block, {
-          props: {
-            ...block.props,
-            subject: data.subject,
-            lockVersion: data.lockVersion,
-            wpid: +data.id,
-            wpurl: data._links?.self?.href || null,
-            status: data._links?.status?.title || null,
-            statusIsClosed: data._embedded?.status?.isClosed || false,
-          },
-        });
-      })
-      .catch(() => { });
-  }
+          // Update block props so markdown is in sync
+          editor.updateBlock(block, {
+            props: {
+              ...block.props,
+              subject: data.subject,
+              lockVersion: data.lockVersion,
+              wpid: +data.id,
+              wpurl: data._links?.self?.href || null,
+              status: data._links?.status?.title || null,
+              statusIsClosed: data._embedded?.status?.isClosed || false,
+            },
+          });
+        })
+        .catch(() => {});
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    , [taskId, editor, block]);
+    [taskId, editor, block],
+  );
 
   // Fetch available statuses when dropdown is opened
   const fetchAvailableStatuses = async () => {
@@ -330,15 +331,12 @@ export const OpenProjectTaskBlockComponent: React.FC<{
       setIsFirstSave(false); // Mark that we've handled the first save
 
       // Automatically insert a new task block below
-      const newBlockId = insertOrUpdateBlock(
-        editor,
-        {
-          type: 'openProjectTask',
-          props: {
-            parentId: block.props.parentId, // Inherit parent ID from current block
-          },
+      const newBlockId = insertOrUpdateBlock(editor, {
+        type: 'openProjectTask',
+        props: {
+          parentId: block.props.parentId, // Inherit parent ID from current block
         },
-      );
+      });
 
       // Focus the new input with a more reliable approach
       setTimeout(() => {
@@ -503,7 +501,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
           width: '500px',
           textDecoration:
             block.props.statusIsClosed ||
-              (block.props.status || '').toLowerCase() === 'closed'
+            (block.props.status || '').toLowerCase() === 'closed'
               ? 'line-through'
               : 'none',
         }}
@@ -603,12 +601,10 @@ export const getOpenProjectTaskBlockSlashMenuItems = (editor, t, group) => [
   {
     title: t('OpenProject Task'),
     onItemClick: async () => {
-
       insertOrUpdateBlock(editor, {
         type: 'openProjectTask',
-        props: {}
+        props: {},
       });
-
     },
     aliases: ['task', 'openprojecttask', 'op-task'],
     group,
@@ -616,8 +612,6 @@ export const getOpenProjectTaskBlockSlashMenuItems = (editor, t, group) => [
     subtext: t('Add an OpenProject task block'),
   },
 ];
-
-
 
 // Formatting toolbar item
 export const getOpenProjectTaskBlockFormattingToolbarItems = (

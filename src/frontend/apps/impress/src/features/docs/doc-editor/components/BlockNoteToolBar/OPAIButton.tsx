@@ -80,7 +80,6 @@ interface AIMenuItemOPFeatureTransform {
   docId: string;
 }
 
-
 const AIMenuItemOPFeatureTransform = ({
   docId,
 }: PropsWithChildren<AIMenuItemOPFeatureTransform>) => {

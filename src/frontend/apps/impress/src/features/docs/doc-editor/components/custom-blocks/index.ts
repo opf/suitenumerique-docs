@@ -3,6 +3,6 @@ export * from './QuoteBlock';
 export * from './OpenProjectWorkPackageBlock';
 export * from './OpenProjectTaskBlock';
 export {
-    getOpenProjectTaskBlockFormattingToolbarItems,
-    convertBulletListToOpenProjectTasks,
+  getOpenProjectTaskBlockFormattingToolbarItems,
+  convertBulletListToOpenProjectTasks,
 } from './OpenProjectTaskBlock';

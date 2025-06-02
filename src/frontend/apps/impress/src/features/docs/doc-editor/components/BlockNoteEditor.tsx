@@ -10,7 +10,11 @@ import {
 import '@blocknote/core/fonts/inter.css';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
-import { DefaultReactSuggestionItem, SuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
+import {
+  DefaultReactSuggestionItem,
+  SuggestionMenuController,
+  useCreateBlockNote,
+} from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -170,10 +174,8 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
         <BlockNoteSuggestionMenu />
         <BlockNoteToolbar />
         <SuggestionMenuController
-          triggerCharacter={"#"}
-          getItems={async (query) =>
-            getOpenProjectMenuItems(editor, query)
-          }
+          triggerCharacter={'#'}
+          getItems={async (query) => getOpenProjectMenuItems(editor, query)}
         />
       </BlockNoteView>
     </Box>
@@ -183,7 +185,6 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
 interface BlockNoteEditorVersionProps {
   initialContent: Y.XmlFragment;
 }
-
 
 export const BlockNoteEditorVersion = ({
   initialContent,
