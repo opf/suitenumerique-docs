@@ -8,26 +8,12 @@ import { fetchAPI } from '@/api';
 import { Icon } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
-
-interface WorkPackage {
-  id: string;
-  subject: string;
-  status?: string | null;
-  assignee?: string | null;
-  href?: string | null;
-  _links?: {
-    self: { href: string };
-    status: { title: string } | null;
-    assignee: { title: string } | null;
-    type: { title: string } | null;
-  } | null;
-}
-
-interface WorkPackageCollection {
-  _embedded: {
-    elements: WorkPackage[];
-  };
-}
+import {
+  UI_BEIGE,
+  UI_BLUE,
+  WorkPackage,
+  WorkPackageCollection,
+} from './OpenProjectBlockCommon';
 
 interface OpenProjectResponse {
   _embedded?: {
@@ -83,7 +69,12 @@ const OpenProjectWorkPackageBlockComponent = ({
   const [selectedType, setSelectedType] = useState<string | null>(null);
   // Statuses, subject, description, saving
   const [statuses, setStatuses] = useState<
-    Array<{ id: string; name: string; _links: { self: { href: string } } }>
+    Array<{
+      id: string;
+      color: string;
+      name: string;
+      _links: { self: { href: string } };
+    }>
   >([]);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [subject, setSubject] = useState('');
@@ -129,17 +120,20 @@ const OpenProjectWorkPackageBlockComponent = ({
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json() as OpenProjectResponse;
-        
+        const data = (await response.json()) as OpenProjectResponse;
+
         // OpenProject returns statuses in _embedded.elements
         if (isMounted && data._embedded?.elements) {
-          setStatuses(
-            data._embedded.elements.filter(item => item._links?.self?.href) as Array<{
-              id: string;
-              name: string;
-              _links: { self: { href: string } };
-            }>,
-          );
+          // TODO
+          // setStatuses(
+          // data._embedded.elements.filter(
+          //   (item) => item._links?.self?.href,
+          // ) as Array<{
+          //   id: string;
+          //   name: string;
+          //   _links: { self: { href: string } };
+          // }>,
+          // );
         } else if (isMounted) {
           setStatuses([]);
         }
@@ -177,12 +171,14 @@ const OpenProjectWorkPackageBlockComponent = ({
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json() as OpenProjectResponse;
-        
+        const data = (await response.json()) as OpenProjectResponse;
+
         // OpenProject returns types in _embedded.elements
         if (isMounted && data._embedded?.elements) {
           setTypes(
-            data._embedded.elements.filter(item => item._links?.self?.href) as Array<{
+            data._embedded.elements.filter(
+              (item) => item._links?.self?.href,
+            ) as Array<{
               id: string;
               name: string;
               _links: { self: { href: string } };
@@ -220,14 +216,14 @@ const OpenProjectWorkPackageBlockComponent = ({
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json() as OpenProjectResponse;
-        
+        const data = (await response.json()) as OpenProjectResponse;
+
         // OpenProject returns projects in _embedded.elements
         if (isMounted && data._embedded?.elements) {
           setProjects(
-            data._embedded.elements.map(item => ({
+            data._embedded.elements.map((item) => ({
               id: item.id,
-              name: item.name
+              name: item.name,
             })),
           );
         } else if (isMounted) {
@@ -336,6 +332,13 @@ const OpenProjectWorkPackageBlockComponent = ({
     });
   };
 
+  // Focus input when component is mounted and mode is 'search'
+  useEffect(() => {
+    if (mode === 'search' && inputRef.current) {
+      setTimeout(() => inputRef?.current?.focus(), 50);
+    }
+  }, [mode]);
+
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isDropdownOpen) {
@@ -374,137 +377,173 @@ const OpenProjectWorkPackageBlockComponent = ({
   return (
     <div>
       <div style={{ marginBottom: 12 }}>
-        <button
+        {/* <button
           onClick={() => setMode('search')}
           disabled={mode === 'search'}
           style={{ marginRight: 8 }}
         >
           {t('Search Work Package')}
-        </button>
-        <button onClick={() => setMode('create')} disabled={mode === 'create'}>
-          {t('New Work Package')}
-        </button>
+        </button> */}
       </div>
 
       {mode === 'search' && (
         <div>
-          <div style={{ position: 'relative' }}>
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder={t('Search for work package ID or subject')}
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                if (e.target.value) {
-                  setIsDropdownOpen(true);
-                }
-              }}
-              onFocus={() => {
-                if (searchResults.length > 0) {
-                  setIsDropdownOpen(true);
-                }
-              }}
-              onKeyDown={handleKeyDown}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                borderRadius: '4px',
-                border: '1px solid #ccc',
-                fontSize: '14px',
-              }}
-            />
-
-            {/* Autocomplete dropdown */}
-            {isDropdownOpen && searchResults.length > 0 && (
+          {!block.props.wpid && (
+            <div style={{ position: 'relative' }}>
               <div
-                ref={dropdownRef}
-                role="listbox"
-                aria-label={t('Work package search results')}
                 style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  zIndex: 10,
-                  backgroundColor: 'white',
-                  border: '1px solid #ccc',
-                  borderRadius: '0 0 4px 4px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  maxHeight: '200px',
-                  overflowY: 'auto',
-                  marginTop: '2px',
+                  display: 'flex',
                 }}
               >
-                {searchResults.slice(0, 5).map((wp, index) => (
-                  <div
-                    key={wp.id}
-                    role="option"
-                    aria-selected={focusedResultIndex === index}
-                    tabIndex={0}
-                    onClick={() => handleSelectWorkPackage(wp)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleSelectWorkPackage(wp);
-                      }
-                    }}
-                    onMouseEnter={() => setFocusedResultIndex(index)}
-                    style={{
-                      padding: '8px 12px',
-                      cursor: 'pointer',
-                      backgroundColor:
-                        focusedResultIndex === index
-                          ? '#f0f0f0'
-                          : 'transparent',
-                      borderBottom:
-                        index < searchResults.length - 1
-                          ? '1px solid #eee'
-                          : 'none',
-                    }}
-                  >
-                    <div style={{ fontWeight: 'bold' }}>
-                      #{wp.id} - {wp.subject}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      {wp._links?.type?.title} {wp._links?.status?.title}
-                    </div>
-                  </div>
-                ))}
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder={t('Search for work package ID or subject')}
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    if (e.target.value) {
+                      setIsDropdownOpen(true);
+                    }
+                  }}
+                  onFocus={() => {
+                    if (searchResults.length > 0) {
+                      setIsDropdownOpen(true);
+                    }
+                  }}
+                  onKeyDown={handleKeyDown}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    border: '1px solid #ccc',
+                    fontSize: '14px',
+                  }}
+                />
+                <button onClick={() => setMode('create')}>
+                  {t('New Work Package')}
+                </button>
               </div>
-            )}
-          </div>
 
+              {/* Autocomplete dropdown */}
+              {isDropdownOpen && searchResults.length > 0 && (
+                <div
+                  ref={dropdownRef}
+                  role="listbox"
+                  aria-label={t('Work package search results')}
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    zIndex: 10,
+                    backgroundColor: 'white',
+                    border: '1px solid #ccc',
+                    borderRadius: '0 0 4px 4px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    marginTop: '2px',
+                  }}
+                >
+                  {searchResults.slice(0, 5).map((wp, index) => (
+                    <div
+                      key={wp.id}
+                      role="option"
+                      aria-selected={focusedResultIndex === index}
+                      tabIndex={0}
+                      onClick={() => handleSelectWorkPackage(wp)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleSelectWorkPackage(wp);
+                        }
+                      }}
+                      onMouseEnter={() => setFocusedResultIndex(index)}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        backgroundColor:
+                          focusedResultIndex === index
+                            ? '#f0f0f0'
+                            : 'transparent',
+                        borderBottom:
+                          index < searchResults.length - 1
+                            ? '1px solid #eee'
+                            : 'none',
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold' }}>
+                        #{wp.id} - {wp.subject}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {wp._links?.type?.title} {wp._links?.status?.title}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {block.props.wpid && !selectedWorkPackage && (
+            <div
+              style={{
+                padding: '4px 8px',
+                border: 'none',
+                borderRadius: '5px',
+                backgroundColor: UI_BEIGE,
+              }}
+            >
+              loading... #{block.props.wpid}
+            </div>
+          )}
           {/* Display selected work package details */}
           {selectedWorkPackage && (
             <div
               style={{
-                marginTop: 12,
-                padding: 12,
-                border: '1px solid #ddd',
-                borderRadius: 4,
+                padding: '4px 8px',
+                border: 'none',
+                borderRadius: '5px',
+                backgroundColor: UI_BEIGE,
               }}
             >
-              <h3>{selectedWorkPackage.subject}</h3>
-              <p>
-                {t('Type')}: {selectedWorkPackage._links?.type?.title}
-              </p>
-              <p>
-                {t('Status')}: {selectedWorkPackage._links?.status?.title}
-              </p>
-              <p>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                }}
+              >
+                <div
+                  style={{
+                    border: 'none',
+                    borderRadius: '5px',
+                    backgroundColor: UI_BEIGE,
+                  }}
+                >
+                  {selectedWorkPackage._links?.type?.title}
+                </div>
+                <div>#{selectedWorkPackage.id}</div>
+                <div>{selectedWorkPackage._links?.status?.title}</div>
+                {/* <p>
                 {t('Assignee')}: {selectedWorkPackage._links?.assignee?.title}
-              </p>
-              <p>
-                {t('Link')}:{' '}
+              </p> */}
+              </div>
+
+              <div>
                 <a
                   href={selectedWorkPackage._links?.self?.href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  style={{
+                    marginRight: 6,
+                    textDecoration: 'none',
+                    color: UI_BLUE,
+                    cursor: 'pointer',
+                  }}
                 >
-                  #{selectedWorkPackage.id}
+                  {selectedWorkPackage.subject}
                 </a>
-              </p>
+              </div>
             </div>
           )}
         </div>

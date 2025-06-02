@@ -1,4 +1,4 @@
-import { insertOrUpdateBlock } from '@blocknote/core';
+import { BlockNoteEditor, insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -12,21 +12,16 @@ import { fetchAPI } from '@/api';
 import { Icon } from '@/components';
 
 import {
+  getWorkPackage,
+  OPENPROJECT_HOST,
   OPENPROJECT_TASK_PROJECT_ID,
   OPENPROJECT_TASK_TYPE_ID,
+  Status,
   UI_BEIGE,
   UI_BLUE,
   UI_GRAY,
-} from './OpenProjectBlockSettings';
-
-interface Status {
-  id: string;
-  name: string;
-  isClosed: boolean;
-  _links: {
-    self: { href: string };
-  };
-}
+  WorkPackage,
+} from './OpenProjectBlockCommon';
 
 export const OpenProjectTaskBlockComponent: React.FC<{
   block: any;
@@ -51,31 +46,30 @@ export const OpenProjectTaskBlockComponent: React.FC<{
   const statusDropdownRef = useRef<HTMLDivElement>(null);
 
   // Fetch latest subject, status, and lockVersion if taskId exists
-  React.useEffect(() => {
-    if (taskId) {
-      fetchAPI(`op/api/v3/work_packages/${taskId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      })
-        .then(async (response) => {
-          if (!response.ok) {
+  React.useEffect(
+    () => {
+      if (!taskId) {
+        return;
+      }
+      getWorkPackage(taskId)
+        .then(async (data: WorkPackage | null) => {
+          if (!data) {
+            console.error('Failed to fetch work package data');
             return;
           }
-          const data = await response.json();
+
           setSubject(data.subject);
           setLockVersion(data.lockVersion);
 
           // Set current status if available
-          if (data._links?.status) {
-            setCurrentStatus({
-              id: data._links.status.href.split('/').pop() || '',
-              name: data._links.status.title || 'Unknown',
-              isClosed: data.status?.isClosed || false,
-              _links: {
-                self: { href: data._links.status.href },
-              },
-            });
-          }
+          setCurrentStatus({
+            id: data._links?.status?.href.split('/').pop() || '',
+            name: data._links?.status?.title || 'Unknown',
+            isClosed: data._embedded?.status?.isClosed || false,
+            _links: {
+              self: { href: data._links?.status?.href || '' },
+            },
+          });
 
           // Update block props so markdown is in sync
           editor.updateBlock(block, {
@@ -86,14 +80,15 @@ export const OpenProjectTaskBlockComponent: React.FC<{
               wpid: +data.id,
               wpurl: data._links?.self?.href || null,
               status: data._links?.status?.title || null,
-              statusIsClosed: data.status?.isClosed || false,
+              statusIsClosed: data._embedded?.status?.isClosed || false,
             },
           });
         })
         .catch(() => {});
-    }
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taskId]);
+    [taskId, editor, block],
+  );
 
   // Fetch available statuses when dropdown is opened
   const fetchAvailableStatuses = async () => {
@@ -221,7 +216,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
   // Focus input after mount or when taskId changes (after creation)
   React.useEffect(() => {
     if (inputRef.current) {
-      inputRef.current.focus();
+      setTimeout(() => inputRef?.current?.focus(), 50);
     }
   }, [taskId]);
 
@@ -336,22 +331,12 @@ export const OpenProjectTaskBlockComponent: React.FC<{
       setIsFirstSave(false); // Mark that we've handled the first save
 
       // Automatically insert a new task block below
-      const newBlockId = insertOrUpdateBlock(
-        editor,
-        {
-          type: 'openProjectTask',
-          props: {
-            parentId: block.props.parentId, // Inherit parent ID from current block
-          },
-          content: '',
+      const newBlockId = insertOrUpdateBlock(editor, {
+        type: 'openProjectTask',
+        props: {
+          parentId: block.props.parentId, // Inherit parent ID from current block
         },
-        {
-          at: {
-            blockId: block.id,
-            position: 'after',
-          },
-        },
-      );
+      });
 
       // Focus the new input with a more reliable approach
       setTimeout(() => {
@@ -393,8 +378,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
   };
 
   // Render ID as link or "NEW"
-  const OPENPROJECT_HOST =
-    process.env.OPEN_PROJECT_HOST || 'https://openproject.local';
+
   const renderId = () => {
     if (!taskId) {
       return <span style={{ color: '#ccc', fontStyle: 'italic' }}>New</span>;
@@ -595,13 +579,13 @@ export const OpenProjectTaskBlock = createReactBlockSpec(
   {
     type: 'openProjectTask',
     propSchema: {
-      wpid: { default: null },
+      wpid: { default: '' },
       subject: { default: '' },
-      lockVersion: { default: null },
-      parentId: { default: null },
+      lockVersion: { default: 0 },
+      parentId: { default: '' },
       status: { default: 'new' },
       statusIsClosed: { default: false },
-      wpurl: { default: null },
+      wpurl: { default: '' },
     },
     content: 'inline',
   },
@@ -613,47 +597,18 @@ export const OpenProjectTaskBlock = createReactBlockSpec(
 );
 
 // Slash menu item
-export const getOpenProjectTaskBlockSlashMenuItems = (editor, t, group) => [
+export const getOpenProjectTaskBlockSlashMenuItems = (
+  editor: any,
+  t: any,
+  group: any,
+) => [
   {
     title: t('OpenProject Task'),
     onItemClick: async () => {
-      // Get the current selection
-      const selection = editor.getSelection();
-      if (!selection) {
-        console.log('No selection found, inserting new OpenProject task block');
-        // If no selection, just insert a new OpenProject task block
-        insertOrUpdateBlock(editor, {
-          type: 'openProjectTask',
-        });
-        return;
-      }
-
-      // Get the block at the current selection
-      const block = editor.getBlock(selection.anchor.blockId);
-      if (!block) {
-        console.log(
-          'No block found at selection, inserting new OpenProject task block',
-        );
-        // If no block found, just insert a new OpenProject task block
-        insertOrUpdateBlock(editor, {
-          type: 'openProjectTask',
-        });
-        return;
-      }
-
-      // If the block is a bullet list item, convert it and its children to OpenProject tasks
-      if (block.type === 'bulletListItem') {
-        console.log('Converting bullet list to OpenProject tasks...');
-        await convertBulletListToOpenProjectTasks(editor, block);
-      } else {
-        console.log(
-          'Inserting new OpenProject task block for non-bullet list item',
-        );
-        // For non-bullet list items, just convert to an OpenProject task
-        insertOrUpdateBlock(editor, {
-          type: 'openProjectTask',
-        });
-      }
+      insertOrUpdateBlock(editor, {
+        type: 'openProjectTask',
+        props: {},
+      });
     },
     aliases: ['task', 'openprojecttask', 'op-task'],
     group,
@@ -662,329 +617,14 @@ export const getOpenProjectTaskBlockSlashMenuItems = (editor, t, group) => [
   },
 ];
 
-// Function to convert bullet list to OpenProject tasks with hierarchy
-export const convertBulletListToOpenProjectTasks = async (editor, block) => {
-  console.log('Starting conversion of bullet list to OpenProject tasks');
-
-  // Get all blocks in the document
-  // const blocks = editor.document.getBlocks();
-  const blocks = editor.document;
-  console.log('Total blocks in document:', blocks.length);
-
-  const currentIndex = blocks.findIndex((b) => b.id === block.id);
-  console.log('Selected block index:', currentIndex);
-
-  if (currentIndex === -1 || block.type !== 'bulletListItem') {
-    console.log('Not a bullet list item, aborting');
-    return; // Not a bullet list item
-  }
-
-  console.log('Selected block:', {
-    id: block.id,
-    type: block.type,
-    content: block.content,
-    props: block.props,
-  });
-
-  // Create a map to track created tasks and their IDs
-  const createdTasksMap = new Map();
-
-  // First, analyze the structure to identify parent-child relationships
-  console.log('Analyzing block hierarchy...');
-  const blockHierarchy = analyzeBlockHierarchy(blocks, currentIndex);
-  console.log(
-    'Block hierarchy analysis result:',
-    JSON.stringify(
-      blockHierarchy,
-      (key, value) => {
-        if (key === 'block') {
-          return {
-            id: value.id,
-            type: value.type,
-            content: value.content,
-            props: value.props,
-          };
-        }
-        return value;
-      },
-      2,
-    ),
-  );
-
-  // Process the hierarchy starting from the root
-  console.log('Processing hierarchy to create tasks...');
-  await processHierarchy(editor, blockHierarchy, null, createdTasksMap);
-  console.log(
-    'Finished processing hierarchy. Created tasks map:',
-    createdTasksMap,
-  );
-};
-
-// Function to analyze the block hierarchy
-const analyzeBlockHierarchy = (blocks, startIndex) => {
-  const rootBlock = blocks[startIndex];
-  const rootLevel = rootBlock.props.indent || 0;
-
-  console.log('Root block:', {
-    id: rootBlock.id,
-    type: rootBlock.type,
-    content: rootBlock.content,
-    props: rootBlock.props,
-    indent: rootLevel,
-  });
-
-  // Create a hierarchical structure
-  const rootNode = {
-    block: rootBlock,
-    children: [],
-    level: rootLevel,
-  };
-
-  // Keep track of nodes at each level
-  const levelNodes = {
-    [rootLevel]: rootNode,
-  };
-
-  // First, collect all bullet list items
-  const bulletItems = [];
-  console.log('Collecting bullet list items...');
-
-  // Log all blocks to see their structure
-  console.log('All blocks:');
-  blocks.forEach((block, idx) => {
-    console.log(`Block ${idx}:`, {
-      id: block.id,
-      type: block.type,
-      content: block.content,
-      props: block.props,
-      indent: block.props.indent || 0,
-    });
-  });
-
-  // Collect all bullet list items, ignoring other block types
-  for (let i = startIndex + 1; i < blocks.length; i++) {
-    const block = blocks[i];
-    console.log(`Examining block ${i}:`, {
-      id: block.id,
-      type: block.type,
-      content: block.content,
-      props: block.props,
-    });
-
-    // Only process bullet list items
-    if (block.type === 'bulletListItem') {
-      const level = block.props.indent || 0;
-      console.log(`Found bullet list item at level ${level}`);
-
-      // If we've gone back to a level lower than our root, we're done with this branch
-      if (level < rootLevel) {
-        console.log('Level is lower than root level, stopping collection');
-        break;
-      }
-
-      bulletItems.push({
-        block,
-        level,
-        index: i,
-      });
-      console.log('Added to bullet items collection');
-    } else {
-      console.log('Not a bullet list item, skipping');
-      // Continue scanning for more bullet list items
-      // This allows us to handle blank lines and other non-bullet list items
-    }
-  }
-
-  console.log('Collected bullet items:', bulletItems.length);
-  console.log(
-    'Bullet items:',
-    bulletItems.map((item) => ({
-      id: item.block.id,
-      content: item.block.content,
-      level: item.level,
-      index: item.index,
-    })),
-  );
-
-  // Now process the bullet items to build the hierarchy
-  console.log('Building hierarchy from bullet items...');
-  for (const item of bulletItems) {
-    const { block: currentBlock, level: currentLevel } = item;
-    console.log('Processing item:', {
-      id: currentBlock.id,
-      content: currentBlock.content,
-      level: currentLevel,
-    });
-
-    // Create a node for this block
-    const currentNode = {
-      block: currentBlock,
-      children: [],
-      level: currentLevel,
-    };
-
-    // Find the parent for this node
-    console.log('Finding parent for level:', currentLevel);
-    console.log('Current level nodes:', Object.keys(levelNodes));
-
-    // For indented items, we need to find the appropriate parent
-    if (currentLevel > rootLevel) {
-      // Start looking for a parent at one level lower
-      let parentLevel = currentLevel - 1;
-      console.log('Initial parent level to look for:', parentLevel);
-
-      // Keep looking for a parent at lower levels until we find one or reach the root level
-      while (parentLevel >= rootLevel && !levelNodes[parentLevel]) {
-        console.log(
-          `No node found at level ${parentLevel}, trying lower level`,
-        );
-        parentLevel--;
-      }
-
-      console.log('Final parent level found:', parentLevel);
-
-      if (parentLevel >= rootLevel) {
-        // Add as a child to the parent
-        console.log(`Adding as child to parent at level ${parentLevel}`);
-        levelNodes[parentLevel].children.push(currentNode);
-        console.log(
-          `Parent now has ${levelNodes[parentLevel].children.length} children`,
-        );
-      } else {
-        console.log(
-          'Could not find a parent for this node, using root as parent',
-        );
-        // If we couldn't find a proper parent, use the root as the parent
-        // This ensures that even if the indentation is unusual, we still maintain the hierarchy
-        levelNodes[rootLevel].children.push(currentNode);
-      }
-    } else if (currentLevel === rootLevel) {
-      // This is a sibling of the root, we're done with the root's hierarchy
-      console.log('This is a sibling of root, stopping hierarchy building');
-      break;
-    }
-
-    // Update the level nodes for this level
-    // This means this node becomes the most recent node at its level
-    console.log(`Updating level nodes for level ${currentLevel}`);
-    levelNodes[currentLevel] = currentNode;
-  }
-
-  console.log(
-    'Final hierarchy:',
-    JSON.stringify(
-      rootNode,
-      (key, value) => {
-        if (key === 'block') {
-          return {
-            id: value.id,
-            type: value.type,
-            content: value.content,
-            props: value.props,
-          };
-        }
-        return value;
-      },
-      2,
-    ),
-  );
-
-  return rootNode;
-};
-
-// Function to process the hierarchy and create tasks
-const processHierarchy = async (
-  editor,
-  node,
-  parentTaskId,
-  createdTasksMap,
-) => {
-  const { block } = node;
-  console.log('Processing node:', {
-    id: block.id,
-    content: block.content,
-    children: node.children.length,
-    parentTaskId,
-  });
-
-  // Extract content from the bullet point
-  const content = Array.isArray(block.content)
-    ? block.content.map((c) => c.text || '').join('')
-    : block.content || '';
-
-  console.log('Extracted content:', content);
-
-  if (!content.trim()) {
-    console.log('Empty content, skipping task creation');
-    return;
-  }
-
-  // Create a new OpenProject task
-  console.log('Creating OpenProject task with subject:', content.trim());
-  console.log('Parent task ID:', parentTaskId);
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  editor.replaceBlocks(
-    [block],
-    [
-      {
-        type: 'openProjectTask',
-        props: {
-          subject: content.trim(),
-          parentId: parentTaskId,
-        },
-        content: [],
-      },
-    ],
-  );
-
-  const newTaskBlock = block;
-
-  console.log('New task block created:', newTaskBlock.id);
-
-  // Wait for the task to be created in OpenProject
-  let taskId = null;
-  let attempts = 0;
-  const maxAttempts = 10;
-
-  console.log('Waiting for task to be created in OpenProject...');
-
-  while (!taskId && attempts < maxAttempts) {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const updatedBlock = editor.getBlock(newTaskBlock.id);
-    console.log('Updated block:', updatedBlock);
-    taskId = updatedBlock?.props?.wpid;
-    console.log(`Attempt ${attempts + 1}: Task ID:`, taskId);
-    attempts++;
-  }
-
-  if (taskId) {
-    console.log('Task created successfully with ID:', taskId);
-    createdTasksMap.set(block.id, taskId);
-
-    console.log(`Processing ${node.children.length} children...`);
-    // Process children only after the parent task has been created
-    for (const childNode of node.children) {
-      console.log('Processing child node:', {
-        id: childNode.block.id,
-        content: childNode.block.content,
-      });
-      await processHierarchy(editor, childNode, taskId, createdTasksMap);
-    }
-  } else {
-    console.log('Failed to create task after', maxAttempts, 'attempts');
-  }
-};
-
 // Formatting toolbar item
 export const getOpenProjectTaskBlockFormattingToolbarItems = (
-  t,
+  t: any,
 ): BlockTypeSelectItem => ({
   name: t('OpenProject Task'),
   type: 'openProjectTask',
   icon: () => <RiCheckLine />,
   isSelected: (block) => {
-    console.log('Checking if block is OpenProject task:', block);
     return block.type === 'openProjectTask';
   },
 });
