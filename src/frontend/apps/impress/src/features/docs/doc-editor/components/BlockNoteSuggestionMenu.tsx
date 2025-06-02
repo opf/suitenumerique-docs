@@ -19,7 +19,7 @@ import {
 } from './custom-blocks';
 
 export const BlockNoteSuggestionMenu = () => {
-  const editor = useBlockNoteEditor<DocsBlockSchema>();
+  const editor = useBlockNoteEditor();
   const { t } = useTranslation();
   const basicBlocksName = useDictionary().slash_menu.page_break.group;
 

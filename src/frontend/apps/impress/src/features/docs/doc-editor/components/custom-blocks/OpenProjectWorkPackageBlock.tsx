@@ -8,7 +8,7 @@ import { fetchAPI } from '@/api';
 import { Icon } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
-import { UI_BEIGE, UI_BLUE, WorkPackage, WorkPackageCollection } from './OpenProjectBlockSettings';
+import { UI_BEIGE, UI_BLUE, WorkPackage, WorkPackageCollection } from './OpenProjectBlockCommon';
 
 
 

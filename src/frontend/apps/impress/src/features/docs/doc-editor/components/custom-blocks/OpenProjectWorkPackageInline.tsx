@@ -1,5 +1,5 @@
 import { createReactInlineContentSpec } from "@blocknote/react";
-import { OPENPROJECT_HOST, UI_BLUE } from "./OpenProjectBlockSettings";
+import { OPENPROJECT_HOST, UI_BLUE } from "./OpenProjectBlockCommon";
 
 export const OpenProjectWorkPackageInline = createReactInlineContentSpec(
     {

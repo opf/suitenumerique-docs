@@ -12,14 +12,13 @@ import {
 } from '@openfun/cunningham-react';
 import { PropsWithChildren, ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RiCheckLine, RiFileTextLine } from 'react-icons/ri';
+import { RiFileTextLine } from 'react-icons/ri';
 
 import { isAPIError } from '@/api';
 import { Icon } from '@/components';
 import { useDocStore } from '@/docs/doc-management/';
 
 import { useDocAIOPFeature } from '../../api';
-import { convertBulletListToOpenProjectTasks } from '../custom-blocks/OpenProjectTaskBlock';
 
 export function OPAIButton() {
   const editor = useBlockNoteEditor();
@@ -59,9 +58,6 @@ export function OPAIButton() {
         className="bn-menu-dropdown bn-drag-handle-menu --docs--ai-actions-menu"
         sub={true}
       >
-        <AIMenuItemConvertToTasks docId={currentDoc.id}>
-          {t(' ')}
-        </AIMenuItemConvertToTasks>
         <AIMenuItemOPFeatureTransform docId={currentDoc.id}>
           {t(' ')}
         </AIMenuItemOPFeatureTransform>
@@ -84,52 +80,6 @@ interface AIMenuItemOPFeatureTransform {
   docId: string;
 }
 
-const AIMenuItemConvertToTasks = ({
-  children,
-  docId, // eslint-disable-line @typescript-eslint/no-unused-vars
-}: PropsWithChildren<AIMenuItemOPFeatureTransform>) => {
-  const editor = useBlockNoteEditor();
-  const [isPending, setIsPending] = useState(false);
-  const { toast } = useToastProvider();
-  const { t } = useTranslation();
-
-  const handleConvertToTasks = async (selectedBlocks: Block[]) => {
-    setIsPending(true);
-    try {
-      // For each selected block that is a bulletListItem, convert it and its children to tasks
-      let convertedAny = false;
-      for (const block of selectedBlocks) {
-        if (block.type === 'bulletListItem') {
-          await convertBulletListToOpenProjectTasks(editor, block);
-          convertedAny = true;
-        }
-      }
-
-      if (!convertedAny) {
-        toast(
-          t('Please select bullet points to convert to tasks'),
-          VariantType.WARNING,
-        );
-      }
-    } catch (error) {
-      console.error('Error converting to tasks:', error);
-      toast(t('Failed to convert to tasks'), VariantType.ERROR);
-    } finally {
-      setIsPending(false);
-    }
-  };
-
-  return (
-    <AIMenuItem
-      requestAI={handleConvertToTasks}
-      isPending={isPending}
-      label="Convert to task(s)"
-      icon={<RiCheckLine />}
-    >
-      {children}
-    </AIMenuItem>
-  );
-};
 
 const AIMenuItemOPFeatureTransform = ({
   docId,

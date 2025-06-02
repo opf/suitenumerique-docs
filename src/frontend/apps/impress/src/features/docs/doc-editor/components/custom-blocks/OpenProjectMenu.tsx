@@ -1,5 +1,5 @@
 import { createReactInlineContentSpec, DefaultReactSuggestionItem } from "@blocknote/react";
-import { OPENPROJECT_HOST, searchWorkPackages, UI_BLUE } from "./OpenProjectBlockSettings";
+import { OPENPROJECT_HOST, searchWorkPackages, UI_BLUE } from "./OpenProjectBlockCommon";
 import { blockNoteSchema } from "../BlockNoteEditor";
 
 
