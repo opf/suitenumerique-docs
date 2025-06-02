@@ -5,6 +5,7 @@ import {
   blockMappingDividerPDF,
   blockMappingHeadingPDF,
   blockMappingImagePDF,
+  blockMappingOpenProjectTaskPDF,
   blockMappingOpenProjectWorkPackagePDF,
   blockMappingParagraphPDF,
   blockMappingQuotePDF,
@@ -24,5 +25,6 @@ export const pdfDocsSchemaMappings: DocsExporterPDF['mappings'] = {
     quote: blockMappingQuotePDF,
     table: blockMappingTablePDF,
     openProjectWorkPackage: blockMappingOpenProjectWorkPackagePDF,
+    openProjectTask: blockMappingOpenProjectTaskPDF,
   },
 };
