@@ -1378,6 +1378,45 @@ class DocumentViewSet(
 
         return drf.response.Response(response, status=drf.status.HTTP_200_OK)
 
+
+    @drf.decorators.action(
+        detail=True,
+        methods=["post"],
+        name="Transform to a OpenProject feature with AI",
+        url_path="ai-transform-open-project-feature",
+        throttle_classes=[utils.AIDocumentRateThrottle, utils.AIUserRateThrottle],
+    )
+    def ai_transform_open_project_feature(self, request, *args, **kwargs):
+        """
+        POST /api/v1.0/documents/<resource_id>/ai-transform-open-project-feature
+        with expected data:
+        - text: str
+        - template: str
+        Return JSON response with the processed text.
+        """
+        # Check permissions first
+
+        logger.info("AI Transform OpenProject Feature API called by user %s on document %s", request.user, kwargs.get("pk"))
+        logger.info("-- Before response 1")
+
+        # self.get_object()
+        logger.info("-- Before response 2")
+
+        serializer = serializers.AITransformOpenProjectFeatureSerializer(data=request.data)
+        logger.info("-- Before response 3")
+
+        serializer.is_valid(raise_exception=True)
+
+        text = serializer.validated_data["text"]
+        template = serializer.validated_data["template"]
+
+        logger.info("-- Before response 4")
+
+        response = AIService().transform_to_open_project_feature(text, template)
+
+        return drf.response.Response(response, status=drf.status.HTTP_200_OK)
+
+
     @drf.decorators.action(
         detail=True,
         methods=["post"],

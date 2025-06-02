@@ -685,6 +685,22 @@ class AITransformSerializer(serializers.Serializer):
         if len(value.strip()) == 0:
             raise serializers.ValidationError("Text field cannot be empty.")
         return value
+    
+class AITransformOpenProjectFeatureSerializer(serializers.Serializer):
+    """Serializer for AI OpenProject feature requests."""
+
+    template = serializers.CharField(
+        required=True,
+        help_text="OpenProject template to use for the feature transformation.",
+    )
+    text = serializers.CharField(required=True)
+
+    def validate_text(self, value):
+        """Ensure the text field is not empty."""
+
+        if len(value.strip()) == 0:
+            raise serializers.ValidationError("Text field cannot be empty.")
+        return value
 
 
 class AITranslateSerializer(serializers.Serializer):
