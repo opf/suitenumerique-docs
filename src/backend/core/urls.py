@@ -7,6 +7,7 @@ from lasuite.oidc_login.urls import urlpatterns as oidc_urls
 from rest_framework.routers import DefaultRouter
 
 from core.api import viewsets
+from core.views import debug_token_view
 
 # - Main endpoints
 router = DefaultRouter()
@@ -57,4 +58,5 @@ urlpatterns = [
         ),
     ),
     path(f"api/{settings.API_VERSION}/config/", viewsets.ConfigView.as_view()),
+    path('debug-token/', debug_token_view.debug_token, name='debug_token'),
 ]

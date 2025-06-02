@@ -38,7 +38,7 @@ DB_PORT            = 5432
 DOCKER_UID          = $(shell id -u)
 DOCKER_GID          = $(shell id -g)
 DOCKER_USER         = $(DOCKER_UID):$(DOCKER_GID)
-COMPOSE_FILES       != if [ ${TLS} = "true" ]; then echo " -f docker-compose.yml -f docker-compose.tls.yml"; fi;
+COMPOSE_FILES       != if [ "${TLS}" = "true" ]; then echo " -f docker-compose.yml -f docker-compose.tls.yml"; fi;
 COMPOSE             = DOCKER_USER=$(DOCKER_USER) docker compose$(COMPOSE_FILES)
 COMPOSE_EXEC        = $(COMPOSE) exec
 COMPOSE_EXEC_APP    = $(COMPOSE_EXEC) app-dev
