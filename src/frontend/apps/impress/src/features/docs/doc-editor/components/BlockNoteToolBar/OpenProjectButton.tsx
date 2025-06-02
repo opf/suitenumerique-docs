@@ -1,9 +1,8 @@
+import { fetchAPI } from '@/api';
 import { useComponentsContext } from '@blocknote/react';
 import { VariantType, useToastProvider } from '@openfun/cunningham-react';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-
-import { fetchAPI } from '@/api';
 
 export const OpenProjectButton = () => {
   const Components = useComponentsContext();
