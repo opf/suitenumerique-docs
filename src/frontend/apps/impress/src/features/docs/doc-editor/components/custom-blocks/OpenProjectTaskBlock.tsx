@@ -12,6 +12,7 @@ import { fetchAPI } from '@/api';
 import { Icon } from '@/components';
 
 import {
+  OPENPROJECT_HOST,
   OPENPROJECT_TASK_PROJECT_ID,
   OPENPROJECT_TASK_TYPE_ID,
   UI_BEIGE,
@@ -393,8 +394,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
   };
 
   // Render ID as link or "NEW"
-  const OPENPROJECT_HOST =
-    process.env.OPEN_PROJECT_HOST || 'https://openproject.local';
+  
   const renderId = () => {
     if (!taskId) {
       return <span style={{ color: '#ccc', fontStyle: 'italic' }}>New</span>;
