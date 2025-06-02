@@ -32,6 +32,7 @@ services:
       - DJANGO_CSRF_TRUSTED_ORIGINS=https://docs.local
       - DJANGO_PATH_PREFIX=/backend
       - OIDC_STORE_ACCESS_TOKEN=true
+      - OIDC_RP_SCOPES=openid api_v3 profile email
       - OPEN_PROJECT_HOST=https://openproject.local
     labels:
       - "traefik.enable=true"
