@@ -810,7 +810,7 @@ class Development(Base):
 
     ALLOWED_HOSTS = ["*"]
     CORS_ALLOW_ALL_ORIGINS = True
-    CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "http://localhost:8072 http://localhost:3001").split(" ")
+    CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "http://localhost:8072 http://localhost:3001 http://localhost:3000").split(" ")
     DEBUG = True
 
     path_prefix = os.getenv("DJANGO_PATH_PREFIX")

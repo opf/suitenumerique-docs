@@ -30,6 +30,7 @@ import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
 import {
   CalloutBlock,
   DividerBlock,
+  OpenProjectTaskBlock,
   OpenProjectWorkPackageBlock,
 } from './custom-blocks';
 
@@ -40,6 +41,7 @@ export const blockNoteSchema = withPageBreak(
       callout: CalloutBlock,
       divider: DividerBlock,
       openProjectWorkPackage: OpenProjectWorkPackageBlock,
+      openProjectTask: OpenProjectTaskBlock,
     },
   }),
 );
