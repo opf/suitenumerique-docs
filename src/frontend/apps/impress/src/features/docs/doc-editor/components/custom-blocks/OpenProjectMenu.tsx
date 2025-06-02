@@ -1,5 +1,5 @@
 import { createReactInlineContentSpec, DefaultReactSuggestionItem } from "@blocknote/react";
-import { OPENPROJECT_HOST, searchWorkPackage, UI_BLUE } from "./OpenProjectBlockSettings";
+import { OPENPROJECT_HOST, searchWorkPackages, UI_BLUE } from "./OpenProjectBlockSettings";
 import { blockNoteSchema } from "../BlockNoteEditor";
 
 
@@ -26,7 +26,7 @@ export const getOpenProjectMenuItems = async (
 }
 
 
-  const workpackages = await searchWorkPackage(query);
+  const workpackages = await searchWorkPackages(query);
 
   return workpackages.map((wp) => ({
     title: '#' + wp.id + ' ' + wp.subject,

@@ -12,22 +12,16 @@ import { fetchAPI } from '@/api';
 import { Icon } from '@/components';
 
 import {
+  getWorkPackage,
   OPENPROJECT_HOST,
   OPENPROJECT_TASK_PROJECT_ID,
   OPENPROJECT_TASK_TYPE_ID,
+  Status,
   UI_BEIGE,
   UI_BLUE,
   UI_GRAY,
+  WorkPackage,
 } from './OpenProjectBlockSettings';
-
-interface Status {
-  id: string;
-  name: string;
-  isClosed: boolean;
-  _links: {
-    self: { href: string };
-  };
-}
 
 export const OpenProjectTaskBlockComponent: React.FC<{
   block: any;
@@ -53,30 +47,26 @@ export const OpenProjectTaskBlockComponent: React.FC<{
 
   // Fetch latest subject, status, and lockVersion if taskId exists
   React.useEffect(() => {
-    if (taskId) {
-      fetchAPI(`op/api/v3/work_packages/${taskId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      })
-        .then(async (response) => {
-          if (!response.ok) {
+    getWorkPackage(taskId)
+        .then(async (data: WorkPackage | null) => {
+         
+          if (!data) {
+            console.error('Failed to fetch work package data');
             return;
           }
-          const data = await response.json();
+
           setSubject(data.subject);
           setLockVersion(data.lockVersion);
 
           // Set current status if available
-          if (data._links?.status) {
             setCurrentStatus({
-              id: data._links.status.href.split('/').pop() || '',
-              name: data._links.status.title || 'Unknown',
-              isClosed: data.status?.isClosed || false,
+              id: data._links?.status?.href.split('/').pop() || '',
+              name: data._links?.status?.title || 'Unknown',
+              isClosed: data._embedded?.status?.isClosed || false,
               _links: {
-                self: { href: data._links.status.href },
+                self: { href: data._links?.status?.href || '' },
               },
             });
-          }
 
           // Update block props so markdown is in sync
           editor.updateBlock(block, {
@@ -87,14 +77,14 @@ export const OpenProjectTaskBlockComponent: React.FC<{
               wpid: +data.id,
               wpurl: data._links?.self?.href || null,
               status: data._links?.status?.title || null,
-              statusIsClosed: data.status?.isClosed || false,
+              statusIsClosed: data._embedded?.status?.isClosed || false,
             },
           });
         })
         .catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taskId]);
+  , [taskId, editor, block]);
 
   // Fetch available statuses when dropdown is opened
   const fetchAvailableStatuses = async () => {
@@ -343,13 +333,6 @@ export const OpenProjectTaskBlockComponent: React.FC<{
           type: 'openProjectTask',
           props: {
             parentId: block.props.parentId, // Inherit parent ID from current block
-          },
-          content: '',
-        },
-        {
-          at: {
-            blockId: block.id,
-            position: 'after',
           },
         },
       );
