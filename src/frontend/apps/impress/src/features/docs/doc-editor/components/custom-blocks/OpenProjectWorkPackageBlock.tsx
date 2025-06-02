@@ -124,15 +124,16 @@ const OpenProjectWorkPackageBlockComponent = ({
 
         // OpenProject returns statuses in _embedded.elements
         if (isMounted && data._embedded?.elements) {
-          setStatuses(
-            data._embedded.elements.filter(
-              (item) => item._links?.self?.href,
-            ) as Array<{
-              id: string;
-              name: string;
-              _links: { self: { href: string } };
-            }>,
-          );
+          // TODO
+          // setStatuses(
+          // data._embedded.elements.filter(
+          //   (item) => item._links?.self?.href,
+          // ) as Array<{
+          //   id: string;
+          //   name: string;
+          //   _links: { self: { href: string } };
+          // }>,
+          // );
         } else if (isMounted) {
           setStatuses([]);
         }
@@ -514,20 +515,15 @@ const OpenProjectWorkPackageBlockComponent = ({
               >
                 <div
                   style={{
-                    color: selectedWorkPackage._links?.type?.color,
                     border: 'none',
                     borderRadius: '5px',
                     backgroundColor: UI_BEIGE,
                   }}
                 >
-                  {selectedWorkPackage._links?.type?.color} -
                   {selectedWorkPackage._links?.type?.title}
                 </div>
                 <div>#{selectedWorkPackage.id}</div>
-                <div>
-                  {selectedWorkPackage._links?.status?.color} -
-                  {selectedWorkPackage._links?.status?.title}
-                </div>
+                <div>{selectedWorkPackage._links?.status?.title}</div>
                 {/* <p>
                 {t('Assignee')}: {selectedWorkPackage._links?.assignee?.title}
               </p> */}

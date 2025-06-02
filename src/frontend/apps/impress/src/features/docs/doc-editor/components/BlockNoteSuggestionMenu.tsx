@@ -17,9 +17,10 @@ import {
   getOpenProjectWorkPackageReactSlashMenuItems,
   getQuoteReactSlashMenuItems,
 } from './custom-blocks';
+import { blockNoteSchema } from './BlockNoteEditor';
 
 export const BlockNoteSuggestionMenu = () => {
-  const editor = useBlockNoteEditor();
+  const editor = useBlockNoteEditor(blockNoteSchema);
   const { t } = useTranslation();
   const basicBlocksName = useDictionary().slash_menu.page_break.group;
 

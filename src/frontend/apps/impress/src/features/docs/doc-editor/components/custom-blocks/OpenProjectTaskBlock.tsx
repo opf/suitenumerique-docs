@@ -1,4 +1,4 @@
-import { insertOrUpdateBlock } from '@blocknote/core';
+import { BlockNoteEditor, insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -597,7 +597,11 @@ export const OpenProjectTaskBlock = createReactBlockSpec(
 );
 
 // Slash menu item
-export const getOpenProjectTaskBlockSlashMenuItems = (editor, t, group) => [
+export const getOpenProjectTaskBlockSlashMenuItems = (
+  editor: any,
+  t: any,
+  group: any,
+) => [
   {
     title: t('OpenProject Task'),
     onItemClick: async () => {
@@ -615,7 +619,7 @@ export const getOpenProjectTaskBlockSlashMenuItems = (editor, t, group) => [
 
 // Formatting toolbar item
 export const getOpenProjectTaskBlockFormattingToolbarItems = (
-  t,
+  t: any,
 ): BlockTypeSelectItem => ({
   name: t('OpenProject Task'),
   type: 'openProjectTask',
