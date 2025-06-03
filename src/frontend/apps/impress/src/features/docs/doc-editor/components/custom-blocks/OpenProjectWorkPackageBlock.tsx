@@ -9,14 +9,13 @@ import { Icon } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
 import {
+  getWorkPackage,
   OPENPROJECT_HOST,
   UI_BEIGE,
   UI_BLUE,
-  UI_GRAY,
   WorkPackage,
   WorkPackageCollection,
 } from './OpenProjectBlockCommon';
-import { RiLoaderLine } from 'react-icons/ri';
 
 interface OpenProjectResponse {
   _embedded?: {
@@ -47,6 +46,10 @@ const OpenProjectWorkPackageBlockComponent = ({
   block: BlockProps;
   editor: any; // Using any here to avoid type conflicts with BlockNoteEditor
 }) => {
+  console.log('OpenProjectWorkPackageBlockComponent rendered initially');
+
+  const openedTabRef = useRef<Window | null>(null); // Use useRef to persist the tab reference
+
   const { t } = useTranslation();
   const [mode, setMode] = useState<'search' | 'create'>('search');
 
@@ -246,6 +249,32 @@ const OpenProjectWorkPackageBlockComponent = ({
     };
   }, [mode]);
 
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      if (openedTabRef.current && openedTabRef.current.closed) {
+        console.log('Tab closed, refreshing work package details...');
+        openedTabRef.current = null; // Clear the reference
+
+        // Re-fetch the work package details to update the component
+        if (block.props.wpid) {
+          getWorkPackage(block.props.wpid)
+            .then((workPackage: WorkPackage | null) => {
+              if (workPackage) {
+                handleSelectWorkPackage(workPackage);
+              }
+            })
+            .catch(() => {
+              console.error('Failed to refresh work package details after tab close');
+            });
+        }
+      }
+    }, 1000); // Check every second
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [block.props.wpid, editor, block]);
+
   // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -387,8 +416,8 @@ const OpenProjectWorkPackageBlockComponent = ({
         borderRadius: '5px',
         backgroundColor: UI_BEIGE,
         width: '450px',
-      }}>
-
+      }}
+    >
       {mode === 'search' && (
         <div>
           {!block.props.wpid && (
@@ -489,9 +518,7 @@ const OpenProjectWorkPackageBlockComponent = ({
             </div>
           )}
           {block.props.wpid && !selectedWorkPackage && (
-            <div>
-              loading... #{block.props.wpid}
-            </div>
+            <div>loading... #{block.props.wpid}</div>
           )}
           {/* Display selected work package details */}
           {selectedWorkPackage && (
@@ -515,16 +542,22 @@ const OpenProjectWorkPackageBlockComponent = ({
                 <div
                   style={{
                     color: '#666',
-                  }}>#{selectedWorkPackage.id}</div>
+                  }}
+                >
+                  #{selectedWorkPackage.id}
+                </div>
                 <div
                   style={{
                     fontSize: '0.8rem',
                     borderRadius: '12px',
                     padding: '2px 8px',
                     border: '1px solid #ccc',
-                    backgroundColor: selectedWorkPackage._embedded?.status?.color || UI_BLUE,
+                    backgroundColor:
+                      selectedWorkPackage._embedded?.status?.color || UI_BLUE,
                   }}
-                >{selectedWorkPackage._links?.status?.title}</div>
+                >
+                  {selectedWorkPackage._links?.status?.title}
+                </div>
                 {/* <p>
                 {t('Assignee')}: {selectedWorkPackage._links?.assignee?.title}
               </p> */}
@@ -542,14 +575,20 @@ const OpenProjectWorkPackageBlockComponent = ({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    window.open(url, '_blank');
+                    const newTab = window.open(url, '_blank');
+                    console.log('Tab opened:', newTab);
+                    if (newTab) {
+                      openedTabRef.current = newTab; // Save the reference of the opened tab in useRef
+                    }
                   }}
                   // eslint-disable-next-line jsx-a11y/mouse-events-have-key-events
                   onMouseOver={(e) =>
                     (e.currentTarget.style.textDecoration = 'underline')
                   }
                   // eslint-disable-next-line jsx-a11y/mouse-events-have-key-events
-                  onMouseOut={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                  onMouseOut={(e) =>
+                    (e.currentTarget.style.textDecoration = 'none')
+                  }
                 >
                   {selectedWorkPackage.subject}
                 </a>
@@ -711,8 +750,8 @@ const OpenProjectWorkPackageBlockComponent = ({
                         console.error('Error creating work package:', error);
                         setSaveError(
                           t('Failed to create work package:') +
-                            ' ' +
-                            ((error as Error)?.message || String(error)),
+                          ' ' +
+                          ((error as Error)?.message || String(error)),
                         );
                       })
                       .finally(() => {
@@ -766,19 +805,19 @@ export const getOpenProjectWorkPackageReactSlashMenuItems = (
   t: TFunction<'translation', undefined>,
   group: string,
 ) => [
-  {
-    title: t('OpenProject Work Package'),
-    onItemClick: () => {
-      insertOrUpdateBlock(editor, {
-        type: 'openProjectWorkPackage',
-      });
+    {
+      title: t('OpenProject Work Package'),
+      onItemClick: () => {
+        insertOrUpdateBlock(editor, {
+          type: 'openProjectWorkPackage',
+        });
+      },
+      aliases: ['openproject', 'workpackage', 'op'],
+      group,
+      icon: <Icon iconName="task" $size="18px" />,
+      subtext: t('Add an OpenProject work package block'),
     },
-    aliases: ['openproject', 'workpackage', 'op'],
-    group,
-    icon: <Icon iconName="task" $size="18px" />,
-    subtext: t('Add an OpenProject work package block'),
-  },
-];
+  ];
 
 export const getOpenProjectWorkPackageFormattingToolbarItems = (
   t: TFunction<'translation', undefined>,
