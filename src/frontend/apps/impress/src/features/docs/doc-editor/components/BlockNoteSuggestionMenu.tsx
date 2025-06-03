@@ -14,10 +14,13 @@ import { DocsBlockSchema } from '../types';
 import {
   getCalloutReactSlashMenuItems,
   getDividerReactSlashMenuItems,
+  getOpenProjectTaskBlockSlashMenuItems,
+  getOpenProjectWorkPackageReactSlashMenuItems,
 } from './custom-blocks';
+import { blockNoteSchema } from './BlockNoteEditor';
 
 export const BlockNoteSuggestionMenu = () => {
-  const editor = useBlockNoteEditor<DocsBlockSchema>();
+  const editor = useBlockNoteEditor(blockNoteSchema);
   const { t } = useTranslation();
   const basicBlocksName = useDictionary().slash_menu.page_break.group;
 
@@ -30,6 +33,12 @@ export const BlockNoteSuggestionMenu = () => {
             getPageBreakReactSlashMenuItems(editor),
             getCalloutReactSlashMenuItems(editor, t, basicBlocksName),
             getDividerReactSlashMenuItems(editor, t, basicBlocksName),
+            getOpenProjectWorkPackageReactSlashMenuItems(
+              editor,
+              t,
+              basicBlocksName,
+            ),
+            getOpenProjectTaskBlockSlashMenuItems(editor, t, basicBlocksName),
           ),
           query,
         ),

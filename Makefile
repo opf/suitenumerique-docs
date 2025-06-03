@@ -38,7 +38,8 @@ DB_PORT            = 5432
 DOCKER_UID          = $(shell id -u)
 DOCKER_GID          = $(shell id -g)
 DOCKER_USER         = $(DOCKER_UID):$(DOCKER_GID)
-COMPOSE             = DOCKER_USER=$(DOCKER_USER) docker compose
+COMPOSE_FILES       != if [ "${TLS}" = "true" ]; then echo " -f docker-compose.yml -f docker-compose.tls.yml"; fi;
+COMPOSE             = DOCKER_USER=$(DOCKER_USER) docker compose$(COMPOSE_FILES)
 COMPOSE_EXEC        = $(COMPOSE) exec
 COMPOSE_EXEC_APP    = $(COMPOSE_EXEC) app-dev
 COMPOSE_RUN         = $(COMPOSE) run --rm
@@ -46,7 +47,7 @@ COMPOSE_RUN_APP     = $(COMPOSE_RUN) app-dev
 COMPOSE_RUN_CROWDIN = $(COMPOSE_RUN) crowdin crowdin
 
 # -- Backend
-MANAGE              = $(COMPOSE_RUN_APP) python manage.py
+MANAGE              = $(COMPOSE_EXEC_APP) python manage.py
 MAIL_YARN           = $(COMPOSE_RUN) -w /app/src/mail node yarn
 
 # -- Frontend
@@ -126,7 +127,7 @@ run-backend: ## Start only the backend application and all needed services
 .PHONY: run-backend
 
 run: ## start the wsgi (production) and development server
-run: 
+run:
 	@$(MAKE) run-backend
 	@$(COMPOSE) up --force-recreate -d frontend
 .PHONY: run

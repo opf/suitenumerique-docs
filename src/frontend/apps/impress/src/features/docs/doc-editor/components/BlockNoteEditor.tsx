@@ -2,13 +2,14 @@ import { codeBlock } from '@blocknote/code-block';
 import {
   BlockNoteSchema,
   defaultBlockSpecs,
+  defaultInlineContentSpecs,
   withPageBreak,
 } from '@blocknote/core';
 import '@blocknote/core/fonts/inter.css';
 import * as locales from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
-import { useCreateBlockNote } from '@blocknote/react';
+import { SuggestionMenuController, useCreateBlockNote } from '@blocknote/react';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -27,7 +28,14 @@ import { randomColor } from '../utils';
 
 import { BlockNoteSuggestionMenu } from './BlockNoteSuggestionMenu';
 import { BlockNoteToolbar } from './BlockNoteToolBar/BlockNoteToolbar';
-import { CalloutBlock, DividerBlock } from './custom-blocks';
+import {
+  CalloutBlock,
+  DividerBlock,
+  OpenProjectTaskBlock,
+  OpenProjectWorkPackageBlock,
+} from './custom-blocks';
+import { getOpenProjectMenuItems } from './custom-blocks/OpenProjectMenu';
+// import { OpenProjectWorkPackageInline } from './custom-blocks/OpenProjectWorkPackageInline';
 
 export const blockNoteSchema = withPageBreak(
   BlockNoteSchema.create({
@@ -35,7 +43,13 @@ export const blockNoteSchema = withPageBreak(
       ...defaultBlockSpecs,
       callout: CalloutBlock,
       divider: DividerBlock,
+      openProjectWorkPackage: OpenProjectWorkPackageBlock,
+      openProjectTask: OpenProjectTaskBlock,
     },
+    // inlineContentSpecs: {
+    //   ...defaultInlineContentSpecs,
+    //   openProjectWorkPackageInline: OpenProjectWorkPackageInline,
+    // },
   }),
 );
 
@@ -165,6 +179,10 @@ export const BlockNoteEditor = ({ doc, provider }: BlockNoteEditorProps) => {
       >
         <BlockNoteSuggestionMenu />
         <BlockNoteToolbar />
+        <SuggestionMenuController
+          triggerCharacter={'#'}
+          getItems={async (query) => getOpenProjectMenuItems(editor, query)}
+        />
       </BlockNoteView>
     </Box>
   );

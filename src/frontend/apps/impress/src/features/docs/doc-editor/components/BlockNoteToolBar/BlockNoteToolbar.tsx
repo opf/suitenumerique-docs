@@ -10,12 +10,17 @@ import { useTranslation } from 'react-i18next';
 
 import { useConfig } from '@/core/config/api';
 
-import { getCalloutFormattingToolbarItems } from '../custom-blocks';
+import {
+  getCalloutFormattingToolbarItems,
+  getOpenProjectTaskBlockFormattingToolbarItems,
+} from '../custom-blocks';
 
 import { AIGroupButton } from './AIButton';
 import { FileDownloadButton } from './FileDownloadButton';
 import { MarkdownButton } from './MarkdownButton';
 import { ModalConfirmDownloadUnsafe } from './ModalConfirmDownloadUnsafe';
+import { OPAIButton } from './OPAIButton';
+import { OpenProjectButton } from './OpenProjectButton';
 
 export const BlockNoteToolbar = () => {
   const dict = useDictionary();
@@ -28,6 +33,7 @@ export const BlockNoteToolbar = () => {
     const toolbarItems = getFormattingToolbarItems([
       ...blockTypeSelectItems(dict),
       getCalloutFormattingToolbarItems(t),
+      getOpenProjectTaskBlockFormattingToolbarItems(t),
     ]);
     const fileDownloadButtonIndex = toolbarItems.findIndex(
       (item) =>
@@ -63,6 +69,9 @@ export const BlockNoteToolbar = () => {
 
         {/* Extra button to convert from markdown to json */}
         <MarkdownButton key="customButton" />
+
+        <OPAIButton key="opAIButton" />
+        <OpenProjectButton key="openProjectButton" />
       </FormattingToolbar>
     );
   }, [toolbarItems, conf?.AI_FEATURE_ENABLED]);

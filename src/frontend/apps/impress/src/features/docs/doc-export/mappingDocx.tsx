@@ -4,6 +4,8 @@ import {
   blockMappingCalloutDocx,
   blockMappingDividerDocx,
   blockMappingImageDocx,
+  blockMappingOpenProjectTaskDocx,
+  blockMappingOpenProjectWorkPackageDocx,
   blockMappingQuoteDocx,
 } from './blocks-mapping';
 import { DocsExporterDocx } from './types';
@@ -16,5 +18,7 @@ export const docxDocsSchemaMappings: DocsExporterDocx['mappings'] = {
     divider: blockMappingDividerDocx,
     quote: blockMappingQuoteDocx,
     image: blockMappingImageDocx,
+    openProjectWorkPackage: blockMappingOpenProjectWorkPackageDocx,
+    openProjectTask: blockMappingOpenProjectTaskDocx,
   },
 };

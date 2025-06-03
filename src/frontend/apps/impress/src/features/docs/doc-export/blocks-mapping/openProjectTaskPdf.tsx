@@ -2,7 +2,7 @@ import { Text } from '@react-pdf/renderer';
 
 import { DocsExporterPDF } from '../types';
 
-export const blockMappingParagraphPDF: DocsExporterPDF['mappings']['blockMapping']['paragraph'] =
+export const blockMappingOpenProjectTaskPDF: DocsExporterPDF['mappings']['blockMapping']['openProjectTask'] =
   (block, exporter) => {
     /**
      * Breakline in the editor are not rendered in the PDF

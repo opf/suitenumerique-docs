@@ -318,6 +318,8 @@ class Base(Configuration):
         # OIDC third party
         "mozilla_django_oidc",
         "lasuite.malware_detection",
+        # OP explore things
+        "opintegration",
     ]
 
     # Cache
@@ -808,8 +810,12 @@ class Development(Base):
 
     ALLOWED_HOSTS = ["*"]
     CORS_ALLOW_ALL_ORIGINS = True
-    CSRF_TRUSTED_ORIGINS = ["http://localhost:8072", "http://localhost:3000"]
+    CSRF_TRUSTED_ORIGINS = os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "http://localhost:8072 http://localhost:3001 http://localhost:3000").split(" ")
     DEBUG = True
+
+    path_prefix = os.getenv("DJANGO_PATH_PREFIX")
+    if path_prefix is not None:
+        FORCE_SCRIPT_NAME = path_prefix
 
     SESSION_COOKIE_NAME = "impress_sessionid"
 
