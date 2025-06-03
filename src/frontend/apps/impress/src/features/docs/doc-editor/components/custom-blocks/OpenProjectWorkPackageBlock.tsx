@@ -9,11 +9,14 @@ import { Icon } from '@/components';
 
 import { DocsBlockNoteEditor } from '../../types';
 import {
+  OPENPROJECT_HOST,
   UI_BEIGE,
   UI_BLUE,
+  UI_GRAY,
   WorkPackage,
   WorkPackageCollection,
 } from './OpenProjectBlockCommon';
+import { RiLoaderLine } from 'react-icons/ri';
 
 interface OpenProjectResponse {
   _embedded?: {
@@ -374,17 +377,17 @@ const OpenProjectWorkPackageBlockComponent = ({
     }
   };
 
+  const url = `${OPENPROJECT_HOST}/wp/${block.props.wpid}`;
+
   return (
-    <div>
-      <div style={{ marginBottom: 12 }}>
-        {/* <button
-          onClick={() => setMode('search')}
-          disabled={mode === 'search'}
-          style={{ marginRight: 8 }}
-        >
-          {t('Search Work Package')}
-        </button> */}
-      </div>
+    <div
+      style={{
+        padding: '12px 10px',
+        border: 'none',
+        borderRadius: '5px',
+        backgroundColor: UI_BEIGE,
+        width: '450px',
+      }}>
 
       {mode === 'search' && (
         <div>
@@ -420,9 +423,9 @@ const OpenProjectWorkPackageBlockComponent = ({
                     fontSize: '14px',
                   }}
                 />
-                <button onClick={() => setMode('create')}>
+                {/* <button onClick={() => setMode('create')}>
                   {t('New Work Package')}
-                </button>
+                </button> */}
               </div>
 
               {/* Autocomplete dropdown */}
@@ -486,27 +489,13 @@ const OpenProjectWorkPackageBlockComponent = ({
             </div>
           )}
           {block.props.wpid && !selectedWorkPackage && (
-            <div
-              style={{
-                padding: '4px 8px',
-                border: 'none',
-                borderRadius: '5px',
-                backgroundColor: UI_BEIGE,
-              }}
-            >
+            <div>
               loading... #{block.props.wpid}
             </div>
           )}
           {/* Display selected work package details */}
           {selectedWorkPackage && (
-            <div
-              style={{
-                padding: '4px 8px',
-                border: 'none',
-                borderRadius: '5px',
-                backgroundColor: UI_BEIGE,
-              }}
-            >
+            <div>
               <div
                 style={{
                   display: 'flex',
@@ -515,15 +504,27 @@ const OpenProjectWorkPackageBlockComponent = ({
               >
                 <div
                   style={{
-                    border: 'none',
-                    borderRadius: '5px',
-                    backgroundColor: UI_BEIGE,
+                    gap: '8px',
+                    color: selectedWorkPackage._embedded?.type?.color || UI_BLUE,
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase',
                   }}
                 >
                   {selectedWorkPackage._links?.type?.title}
                 </div>
-                <div>#{selectedWorkPackage.id}</div>
-                <div>{selectedWorkPackage._links?.status?.title}</div>
+                <div
+                  style={{
+                    color: '#666',
+                  }}>#{selectedWorkPackage.id}</div>
+                <div
+                  style={{
+                    fontSize: '0.8rem',
+                    borderRadius: '12px',
+                    padding: '2px 8px',
+                    border: '1px solid #ccc',
+                    backgroundColor: selectedWorkPackage._embedded?.status?.color || UI_BLUE,
+                  }}
+                >{selectedWorkPackage._links?.status?.title}</div>
                 {/* <p>
                 {t('Assignee')}: {selectedWorkPackage._links?.assignee?.title}
               </p> */}
@@ -531,15 +532,24 @@ const OpenProjectWorkPackageBlockComponent = ({
 
               <div>
                 <a
-                  href={selectedWorkPackage._links?.self?.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={url}
                   style={{
                     marginRight: 6,
                     textDecoration: 'none',
                     color: UI_BLUE,
                     cursor: 'pointer',
                   }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open(url, '_blank');
+                  }}
+                  // eslint-disable-next-line jsx-a11y/mouse-events-have-key-events
+                  onMouseOver={(e) =>
+                    (e.currentTarget.style.textDecoration = 'underline')
+                  }
+                  // eslint-disable-next-line jsx-a11y/mouse-events-have-key-events
+                  onMouseOut={(e) => (e.currentTarget.style.textDecoration = 'none')}
                 >
                   {selectedWorkPackage.subject}
                 </a>

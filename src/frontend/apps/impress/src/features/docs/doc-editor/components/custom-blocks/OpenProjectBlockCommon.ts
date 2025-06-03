@@ -27,6 +27,9 @@ export interface WorkPackage {
   } | null;
   _embedded?: {
     status?: Status | null;
+    type?: {
+      color: string;
+    } | null;
   } | null;
 }
 
@@ -40,6 +43,7 @@ export interface Status {
   id: string;
   name: string;
   isClosed: boolean;
+  color: string;
   _links: {
     self: { href: string };
   };

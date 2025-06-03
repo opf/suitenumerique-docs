@@ -1,6 +1,7 @@
 import { BlockNoteEditor, insertOrUpdateBlock } from '@blocknote/core';
 import { BlockTypeSelectItem, createReactBlockSpec } from '@blocknote/react';
 import React, { useEffect, useRef, useState } from 'react';
+import { RiLoaderLine } from "react-icons/ri";
 import {
   RiCheckLine,
   RiCheckboxBlankCircleLine,
@@ -485,6 +486,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
         background: UI_BEIGE,
         borderRadius: '5px',
         padding: '4px 8px',
+        width: '550px',
       }}
       data-block-id={block.id}
     >
@@ -505,7 +507,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
           outline: 'none',
           background: 'transparent',
           fontSize: 16,
-          width: '500px',
+          width: '450px',
           textDecoration:
             block.props.statusIsClosed ||
             (block.props.status || '').toLowerCase() === 'closed'
@@ -513,7 +515,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
               : 'none',
         }}
       />
-      {saving && <Icon iconName="spinner" $size="16px" />}
+      {saving && <RiLoaderLine className='icon-spin' />}
       {error && (
         <span style={{ color: 'red', marginLeft: 8 }} title={error}>
           <Icon iconName="error" $size="16px" />
