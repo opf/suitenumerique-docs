@@ -12,7 +12,7 @@ import {
 } from '@openfun/cunningham-react';
 import { PropsWithChildren, ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RiMagicFill } from 'react-icons/ri';
+import { PiMagicWandFill } from "react-icons/pi";
 
 import { isAPIError } from '@/api';
 import { Icon } from '@/components';
@@ -156,7 +156,7 @@ const AIMenuItemOPFeatureTransform = ({
         requestAI={requestAIAction}
         isPending={isPending}
         label="Convert text to feature (AI)"
-        icon={<RiMagicFill />}
+        icon={<PiMagicWandFill />}
       ></AIMenuItem>
     </>
   );
