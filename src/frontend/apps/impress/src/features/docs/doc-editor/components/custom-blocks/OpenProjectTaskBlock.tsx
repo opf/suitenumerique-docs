@@ -85,7 +85,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
             },
           });
         })
-        .catch(() => {});
+        .catch(() => { });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [taskId, editor, block],
@@ -432,9 +432,9 @@ export const OpenProjectTaskBlockComponent: React.FC<{
     }
 
     // If status dropdown is open, show a loading spinner while fetching statuses
-    if (isStatusDropdownOpen && statusUpdateSaving) {
-      return <Icon iconName="spinner" $size="16px" />;
-    }
+    // if (isStatusDropdownOpen && statusUpdateSaving) {
+    //   return <Icon iconName="spinner" $size="16px" />;
+    // }
 
     const statusName = block.props.status || 'new';
     const isClosed =
@@ -510,7 +510,7 @@ export const OpenProjectTaskBlockComponent: React.FC<{
           width: '450px',
           textDecoration:
             block.props.statusIsClosed ||
-            (block.props.status || '').toLowerCase() === 'closed'
+              (block.props.status || '').toLowerCase() === 'closed'
               ? 'line-through'
               : 'none',
         }}
@@ -611,20 +611,20 @@ export const getOpenProjectTaskBlockSlashMenuItems = (
   t: any,
   group: any,
 ) => [
-  {
-    title: t('OpenProject Task'),
-    onItemClick: async () => {
-      insertOrUpdateBlock(editor, {
-        type: 'openProjectTask',
-        props: {},
-      });
+    {
+      title: t('OpenProject Task'),
+      onItemClick: async () => {
+        insertOrUpdateBlock(editor, {
+          type: 'openProjectTask',
+          props: {},
+        });
+      },
+      aliases: ['task', 'openprojecttask', 'op-task'],
+      group,
+      icon: <Icon iconName="task" $size="18px" />,
+      subtext: t('Add an OpenProject task block'),
     },
-    aliases: ['task', 'openprojecttask', 'op-task'],
-    group,
-    icon: <Icon iconName="task" $size="18px" />,
-    subtext: t('Add an OpenProject task block'),
-  },
-];
+  ];
 
 // Formatting toolbar item
 export const getOpenProjectTaskBlockFormattingToolbarItems = (

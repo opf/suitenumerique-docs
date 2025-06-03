@@ -1,9 +1,10 @@
 import { fetchAPI } from '@/api';
+import { format } from 'path';
 
 export const OPENPROJECT_TASK_PROJECT_ID = '1'; // TODO: Replace with your actual project ID
 export const OPENPROJECT_TASK_TYPE_ID = '1'; // TODO: Replace with your actual "task" type ID
 export const OPENPROJECT_FEATURE_PROJECT_ID = '1';
-export const OPENPROJECT_FEATURE_TYPE_ID = '1';
+export const OPENPROJECT_FEATURE_TYPE_ID = '4';
 
 export const UI_BLUE = '#000091'; // Default color for task status icons
 export const UI_BEIGE = '#FBF5F2';
@@ -43,7 +44,7 @@ export interface Status {
   id: string;
   name: string;
   isClosed: boolean;
-  color: string;
+  color?: string | null;
   _links: {
     self: { href: string };
   };
@@ -60,6 +61,37 @@ export const getWorkPackage = async (
       return null;
     }
     const data = await response.json();
+    return data as WorkPackage;
+  });
+  return data;
+};
+
+export const createFeature = async (
+  subject: string,
+  description: string,
+): Promise<WorkPackage | null> => {
+  const data = await fetchAPI(`op/api/v3/projects/${OPENPROJECT_FEATURE_PROJECT_ID}/work_packages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      subject: subject,
+      description: {
+        format: 'markdown',
+        raw: description,
+        html: '',
+      },
+      _links: {
+        type: { href: 'op/api/v3/types/' + OPENPROJECT_FEATURE_TYPE_ID },
+        status: { href: 'op/api/v3/statuses/' + '1' },
+      },
+    }),
+  }).then(async (response) => {
+    if (!response.ok) {
+      console.error('Failed to create feature:', response.statusText);
+      return null;
+    }
+    const data = await response.json();
+    console.log('Created feature:', data);
     return data as WorkPackage;
   });
   return data;
