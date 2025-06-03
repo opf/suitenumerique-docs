@@ -68,9 +68,6 @@ services:
       - internal
       - external
     environment:
-      - NEXT_PUBLIC_OPEN_PROJECT_HOST=https://openproject.local
-      - NEXT_PUBLIC_OPEN_PROJECT_TASK_PROJECT_ID=$OPEN_PROJECT_TASK_PROJECT_ID
-      - NEXT_PUBLIC_OPEN_PROJECT_TASK_TYPE_ID=$OPEN_PROJECT_TASK_TYPE_ID
       - NEXT_PUBLIC_API_ORIGIN=https://docs.local/backend
     labels:
       - "traefik.enable=true"
