@@ -43,7 +43,7 @@ export interface Status {
   id: string;
   name: string;
   isClosed: boolean;
-  color: string;
+  color?: string | null;
   _links: {
     self: { href: string };
   };
