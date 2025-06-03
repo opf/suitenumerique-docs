@@ -24,10 +24,14 @@ import {
   WorkPackage,
 } from './OpenProjectBlockCommon';
 
+
+
 export const OpenProjectTaskBlockComponent: React.FC<{
   block: any;
   editor: any;
 }> = ({ block, editor }) => {
+  const openedTabRef = useRef<Window | null>(null); // Use useRef to persist the tab reference
+
   const [subject, setSubject] = useState(block.props.subject || '');
   const [taskId, setTaskId] = useState(block.props.wpid || null);
   const [lockVersion, setLockVersion] = useState(
@@ -386,6 +390,51 @@ export const OpenProjectTaskBlockComponent: React.FC<{
   };
 
   // Render ID as link or "NEW"
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      if (openedTabRef.current && openedTabRef.current.closed) {
+        console.log('Tab closed, refreshing task details...');
+        openedTabRef.current = null; // Clear the reference
+
+        // Re-fetch the task details to update the component
+        if (taskId) {
+          getWorkPackage(taskId)
+            .then((data: WorkPackage | null) => {
+              if (data) {
+                setSubject(data.subject);
+                setLockVersion(data.lockVersion);
+                setCurrentStatus({
+                  id: data._links?.status?.href.split('/').pop() || '',
+                  name: data._links?.status?.title || 'Unknown',
+                  isClosed: data._embedded?.status?.isClosed || false,
+                  _links: {
+                    self: { href: data._links?.status?.href || '' },
+                  },
+                });
+                editor.updateBlock(block, {
+                  props: {
+                    ...block.props,
+                    subject: data.subject,
+                    lockVersion: data.lockVersion,
+                    wpid: +data.id,
+                    wpurl: data._links?.self?.href || null,
+                    status: data._links?.status?.title || null,
+                    statusIsClosed: data._embedded?.status?.isClosed || false,
+                  },
+                });
+              }
+            })
+            .catch(() => {
+              console.error('Failed to refresh task details after tab close');
+            });
+        }
+      }
+    }, 1000); // Check every second
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [taskId, editor, block]);
 
   const renderId = () => {
     if (!taskId) {
@@ -404,7 +453,11 @@ export const OpenProjectTaskBlockComponent: React.FC<{
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          window.open(url, '_blank');
+          const newTab = window.open(url, '_blank');
+          if (newTab) {
+            console.log('Tab opened:', newTab);
+            openedTabRef.current = newTab; // Save the reference of the opened tab in useRef
+          }
         }}
         // eslint-disable-next-line jsx-a11y/mouse-events-have-key-events
         onMouseOver={(e) =>
