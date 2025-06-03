@@ -12,16 +12,18 @@ import {
 } from '@openfun/cunningham-react';
 import { PropsWithChildren, ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RiFileTextLine } from 'react-icons/ri';
+import { PiMagicWandFill } from "react-icons/pi";
 
 import { isAPIError } from '@/api';
 import { Icon } from '@/components';
 import { useDocStore } from '@/docs/doc-management/';
 
 import { useDocAIOPFeature } from '../../api';
+import { createFeature } from '../custom-blocks/OpenProjectBlockCommon';
+import { blockNoteSchema } from '../BlockNoteEditor';
 
 export function OPAIButton() {
-  const editor = useBlockNoteEditor();
+  const editor = useBlockNoteEditor(blockNoteSchema);
   const Components = useComponentsContext();
   const selectedBlocks = useSelectedBlocks(editor);
   const { t } = useTranslation();
@@ -84,16 +86,33 @@ const AIMenuItemOPFeatureTransform = ({
   docId,
 }: PropsWithChildren<AIMenuItemOPFeatureTransform>) => {
   const { mutateAsync: requestAI, isPending } = useDocAIOPFeature();
-  const editor = useBlockNoteEditor();
+  const editor = useBlockNoteEditor(blockNoteSchema);
 
   const template =
-    'As a [enter role of user] \n' +
-    'I want to [enter objective] \n' +
-    'so that [enter desired result] \n' +
-    '  Acceptance criteria \n' +
-    '  - [enter acceptance criteria] \n';
+    `Given the following feature description:
+
+      [Insert your input text here, e.g., "Users should be able to export reports as CSV to analyze data in external tools."]
+
+      Generate:
+      1. A concise subject line for a work package.
+      2. The filled-out feature template.
+
+      Only return:
+      - The subject line prefixed by "Subject:"
+      - The filled-out template as markdown with no explanations.
+
+      Format:
+      Subject: [your generated subject line]
+
+      **As a** [enter role of user]  
+      **I want to** [enter objective]  
+      **so that** [enter desired result]  
+
+      **Acceptance criteria**
+        - [enter acceptance criteria]`;
 
   const requestAIAction = async (selectedBlocks: Block[]) => {
+    console.log("Requesting AI action with selected blocks:", selectedBlocks);
     const text = await editor.blocksToMarkdownLossy(selectedBlocks);
 
     const responseAI = await requestAI({
@@ -106,8 +125,29 @@ const AIMenuItemOPFeatureTransform = ({
       throw new Error('No response from AI');
     }
 
-    const markdown = await editor.tryParseMarkdownToBlocks(responseAI.answer);
-    editor.replaceBlocks(selectedBlocks, markdown);
+    const [subjectLine, ...descriptionLines] = responseAI.answer.split('\n');
+
+    const subject = subjectLine.replace(/^Subject:\s*/, '').trim();
+    const description = descriptionLines.join('\n').trim();
+
+
+    const workpackage = await createFeature(subject, description);
+    if (!workpackage) {
+      throw new Error('Failed to create feature');
+    }
+    editor.insertBlocks([
+      {
+        type: 'openProjectWorkPackage',
+        props: {
+          wpid: workpackage.id,
+        }
+      }
+
+    ], selectedBlocks[selectedBlocks.length - 1], 'after')
+
+
+    // const markdown = await editor.tryParseMarkdownToBlocks(responseAI.answer);
+    // editor.replaceBlocks(selectedBlocks, markdown);
   };
 
   return (
@@ -115,8 +155,8 @@ const AIMenuItemOPFeatureTransform = ({
       <AIMenuItem
         requestAI={requestAIAction}
         isPending={isPending}
-        label="Convert to feature"
-        icon={<RiFileTextLine />}
+        label="Convert text to feature (AI)"
+        icon={<PiMagicWandFill />}
       ></AIMenuItem>
     </>
   );
@@ -140,7 +180,7 @@ const AIMenuItem = ({
   const { toast } = useToastProvider();
   const { t } = useTranslation();
 
-  const editor = useBlockNoteEditor();
+  const editor = useBlockNoteEditor(blockNoteSchema);
   const handleAIError = useHandleAIError();
 
   const handleAIAction = async () => {
@@ -154,7 +194,7 @@ const AIMenuItem = ({
     }
 
     try {
-      await requestAI(selectedBlocks);
+      await requestAI(selectedBlocks as Block[]);
     } catch (error) {
       handleAIError(error);
     }
