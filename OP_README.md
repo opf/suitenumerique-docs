@@ -22,7 +22,7 @@ make run-backend
 The TLS ready Docs stack does not use the Keycloak from La Suite.
 Instead, one must use the Keycloak from the OpenProject Docker Dev stack, which is already documented quite well in the OpenProject docs.
 
-Also, there are a couple of things to set in the `env.d/common` file, like 
+Also, there are a couple of things to set in the `env.d/common` file, like
 the now changed redirect URLs. Those variables are used while building the images.
 
 In Keycloak when configuring the docs client also allow non https redirect_uri.
@@ -38,3 +38,10 @@ make run
 make migrate
 ```
 
+#### Additional things to setup
+
+- amend `common` with the right urls (`openproject.local`, `keycloak.local`, `docs.local`)
+- configure keycloak with new client
+  - name impress
+  - add client scope `api_v3` as default
+  - add a audience mapper to client scope for `openproject` audience

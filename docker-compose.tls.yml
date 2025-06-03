@@ -31,6 +31,9 @@ services:
       - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
       - DJANGO_CSRF_TRUSTED_ORIGINS=https://docs.local
       - DJANGO_PATH_PREFIX=/backend
+      - OIDC_STORE_ACCESS_TOKEN=true
+      - OIDC_RP_SCOPES=openid api_v3 profile email
+      - OPEN_PROJECT_HOST=https://openproject.local
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.docs-backend.rule=Host(`docs.local`) && PathPrefix(`/backend`)"
@@ -57,19 +60,26 @@ services:
         condition: service_started
 
   frontend:
+    ports: !reset []
+
+  frontend-development:
+    user: "${DOCKER_USER:-1000}"
     networks:
       - internal
       - external
+    environment:
+      - NEXT_PUBLIC_API_ORIGIN=https://docs.local/backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.docs.rule=Host(`docs.local`)"
       - "traefik.http.routers.docs.entrypoints=websecure"
     build:
-      args:
-        API_ORIGIN: "https://docs.local/backend"
-        MEDIA_URL: "http://nginx:8083"
-        Y_PROVIDER_URL: "ws://y-provider:4444"
-    ports: !reset []
+      context: .
+      dockerfile: ./src/frontend/Dockerfile
+      target: impress-dev
+    image: impress:frontend-development
+    volumes:
+      - ./src/frontend:/home/frontend
 
   y-provider:
     networks:
