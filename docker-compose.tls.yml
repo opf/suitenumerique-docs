@@ -60,19 +60,29 @@ services:
         condition: service_started
 
   frontend:
+    ports: !reset []
+
+  frontend-development:
+    user: "${DOCKER_USER:-1000}"
     networks:
       - internal
       - external
+    environment:
+      - NEXT_PUBLIC_OPEN_PROJECT_HOST=https://openproject.local
+      - NEXT_PUBLIC_OPEN_PROJECT_TASK_PROJECT_ID=$OPEN_PROJECT_TASK_PROJECT_ID
+      - NEXT_PUBLIC_OPEN_PROJECT_TASK_TYPE_ID=$OPEN_PROJECT_TASK_TYPE_ID
+      - NEXT_PUBLIC_API_ORIGIN=https://docs.local/backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.docs.rule=Host(`docs.local`)"
       - "traefik.http.routers.docs.entrypoints=websecure"
     build:
-      args:
-        API_ORIGIN: "https://docs.local/backend"
-        MEDIA_URL: "http://nginx:8083"
-        Y_PROVIDER_URL: "ws://y-provider:4444"
-    ports: !reset []
+      context: .
+      dockerfile: ./src/frontend/Dockerfile
+      target: impress-dev
+    image: impress:frontend-development
+    volumes:
+      - ./src/frontend:/home/frontend
 
   y-provider:
     networks:
